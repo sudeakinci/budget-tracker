@@ -15,5 +15,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
     Route::apiResource('banks', BankController::class);
     Route::apiResource('transactions', TransactionController::class);
-    Route::apiResource('users', UserController::class); // Eğer kullanıcı yönetimi gerekiyorsa
+    Route::apiResource('users', UserController::class)->except(['index', 'store']);
 });
