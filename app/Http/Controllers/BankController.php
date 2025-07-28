@@ -27,6 +27,16 @@ class BankController extends Controller
             'account_number' => 'nullable|string',
             'iban' => 'nullable|string',
         ]);
+
+        $exists = Bank::where('name', $validated['name'])
+            ->where('iban', $validated['iban'])
+            ->where('account_number', $validated['account_number'])
+            ->first();
+
+        if ($exists) {
+            return response()->json(['message' => 'Bank already exists'], 409);
+        }
+
         $bank = Bank::create($validated);
         return response()->json($bank, 201);
     }
@@ -52,6 +62,16 @@ class BankController extends Controller
             'account_number' => 'nullable|string',
             'iban' => 'nullable|string',
         ]);
+
+        $exists = Bank::where('name', $validated['name'])
+            ->where('branch', $validated['branch'])
+            ->where('iban', $validated['iban'])
+            ->where('account_number', $validated['account_number'])
+            ->first();
+
+        if ($exists) {
+            return response()->json(['message' => 'Bank already exists'], 409);
+        }
 
         $bank->update($validated);
 

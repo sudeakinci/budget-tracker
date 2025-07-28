@@ -36,6 +36,10 @@ class TransactionController extends Controller
     {
         $transaction = Transaction::findOrFail($id);
 
+        if($transaction->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $validated = $request->validate([
             'user_id' => 'sometimes|exists:users,id',
             'bank_id' => 'sometimes|exists:banks,id',
@@ -52,7 +56,14 @@ class TransactionController extends Controller
 
     public function destroy($id)
     {
-        Transaction::findOrFail($id)->delete();
+        $transaction = Transaction::findOrFail($id);
+
+        if($transaction->user_id !== request()->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $transaction->delete();
+
         return response()->json(null, 204);
     }
 }
