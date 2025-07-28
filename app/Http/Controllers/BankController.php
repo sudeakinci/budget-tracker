@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bank;
 use Illuminate\Http\Request;
 
 class BankController extends Controller
@@ -11,6 +12,7 @@ class BankController extends Controller
      */
     public function index()
     {
+        return Bank::all();
 
     }
 
@@ -19,7 +21,14 @@ class BankController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = request()->validate([
+            'name' => 'required|string',
+            'branch' => 'required|string',
+            'account_number' => 'nullable|string',
+            'iban' => 'nullable|string',
+        ]);
+        $bank = Bank::create($validated);
+        return response()->json($bank, 201);
     }
 
     /**
@@ -27,7 +36,7 @@ class BankController extends Controller
      */
     public function show(string $id)
     {
-        //
+        return Bank::findOrFail($id);
     }
 
     /**
@@ -35,7 +44,18 @@ class BankController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $bank = Bank::findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'sometimes|string',
+            'branch' => 'sometimes|string',
+            'account_number' => 'nullable|string',
+            'iban' => 'nullable|string',
+        ]);
+
+        $bank->update($validated);
+
+        return response()->json($bank);
     }
 
     /**
@@ -43,6 +63,7 @@ class BankController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        Bank::findOrFail($id)->delete();
+        return response()->json(null, 204);
     }
 }
