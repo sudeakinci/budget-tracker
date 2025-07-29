@@ -16,5 +16,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('banks', BankController::class);
     Route::apiResource('transactions', TransactionController::class)->except(['update', 'destroy']);
     Route::post('sms-transaction', [TransactionController::class, 'createFromSms']);
-    Route::apiResource('users', UserController::class)->except(['index', 'store']);
+    Route::apiResource('user', UserController::class)->except(['store']);
 });

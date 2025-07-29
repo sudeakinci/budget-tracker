@@ -13,13 +13,9 @@ class UserController extends Controller
     /**
      * Display the authenticated user.
      */
-    public function show(string $id)
+    public function index(Request $request)
     {
-        $user = Auth::user();
-        if ($user->id != $id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-        return $user;
+        return $request->user();
     }
 
     /**
