@@ -10,7 +10,13 @@ class Bank extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'branch', 'account_number', 'iban'];
+    protected $fillable = ['user_id', 'name', 'branch', 'account_number', 'iban'];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function transactions()
     {
         return $this->hasMany(Transaction::class);

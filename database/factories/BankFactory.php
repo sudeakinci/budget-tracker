@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,10 +18,11 @@ class BankFactory extends Factory
     public function definition(): array
     {
         return [
+            'user_id' => User::factory(),
             'name' => fake()->company(),
-            'branch' => fake()->company(),
-            'account_number' => fake()->postcode(),
-            'iban' => fake()->unique()->Iban(),
+            'branch' => fake()->city(),
+            'account_number' => fake()->bankAccountNumber(),
+            'iban' => fake()->unique()->iban('TR'),
         ];
     }
 }

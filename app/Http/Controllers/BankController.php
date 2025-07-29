@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Bank;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class BankController extends Controller
 {
@@ -12,8 +13,7 @@ class BankController extends Controller
      */
     public function index()
     {
-        return Bank::all();
-
+        return Auth::user()->banks;
     }
 
     /**
@@ -21,57 +21,44 @@ class BankController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = request()->validate([
-            'name' => 'required|string',
-            'branch' => 'required|string',
-            'account_number' => 'nullable|string',
-            'iban' => 'nullable|string',
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'branch' => 'nullable|string|max:255',
+            'account_number' => 'nullable|string|max:255',
+            'iban' => 'nullable|string|max:255',
         ]);
 
-        $exists = Bank::where('name', $validated['name'])
-            ->where('iban', $validated['iban'])
-            ->where('account_number', $validated['account_number'])
-            ->first();
+        $bank = Auth::user()->banks()->create($validated);
 
-        if ($exists) {
-            return response()->json(['message' => 'Bank already exists'], 409);
-        }
-
-        $bank = Bank::create($validated);
         return response()->json($bank, 201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Bank $bank)
     {
-        return Bank::findOrFail($id);
+        if ($bank->user_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        return $bank;
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Bank $bank)
     {
-        $bank = Bank::findOrFail($id);
+        if ($bank->user_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
         $validated = $request->validate([
-            'name' => 'sometimes|string',
-            'branch' => 'sometimes|string',
-            'account_number' => 'nullable|string',
-            'iban' => 'nullable|string',
+            'name' => 'sometimes|string|max:255',
+            'branch' => 'nullable|string|max:255',
+            'account_number' => 'nullable|string|max:255',
+            'iban' => 'nullable|string|max:255',
         ]);
-
-        $exists = Bank::where('name', $validated['name'])
-            ->where('branch', $validated['branch'])
-            ->where('iban', $validated['iban'])
-            ->where('account_number', $validated['account_number'])
-            ->first();
-
-        if ($exists) {
-            return response()->json(['message' => 'Bank already exists'], 409);
-        }
 
         $bank->update($validated);
 
@@ -81,9 +68,14 @@ class BankController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Bank $bank)
     {
-        Bank::findOrFail($id)->delete();
+        if ($bank->user_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $bank->delete();
+        
         return response()->json(null, 204);
     }
 }
