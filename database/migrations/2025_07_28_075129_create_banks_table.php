@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('banks', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->string('branch')->nullable();
             $table->string('account_number')->nullable();
             $table->string('iban')->nullable();
             $table->timestamps();
-
         });
     }
 

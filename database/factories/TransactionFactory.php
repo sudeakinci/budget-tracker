@@ -17,12 +17,10 @@ class TransactionFactory extends Factory
     public function definition(): array
     {
         return [
-            "user_id" => \App\Models\User::inRandomOrder()->first()?->id ?? \App\Models\User::factory(),
-            "bank_id" => \App\Models\Bank::inRandomOrder()->first()?->id ?? \App\Models\Bank::factory(),
             "type" => $this->faker->randomElement(['income', 'outcome']),
-            "amount" => $this->faker->randomFloat(2, 10, 1000),
+            "amount" => $this->faker->randomFloat(2, 10, 500),
             "description" => $this->faker->sentence(),
-            "date" => $this->faker->date(),
+            "date" => $this->faker->dateTimeBetween('-1 year', 'now'),
         ];
     }
 }

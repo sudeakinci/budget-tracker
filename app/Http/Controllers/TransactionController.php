@@ -3,14 +3,28 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
+use App\Models\Bank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return Transaction::with(['user', 'bank'])->where('user_id', Auth::id())->get();
+        $query = Auth::user()->transactions()->with(['user', 'bank']);
+
+        // Optional: Filter by type (income/outcome)
+        if ($request->has('type')) {
+            $query->where('type', $request->input('type'));
+        }
+
+        // Optional: Filter by date range
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $query->whereBetween('date', [$request->input('start_date'), $request->input('end_date')]);
+        }
+
+        return $query->latest()->paginate(15);
     }
 
     public function store(Request $request)
@@ -24,93 +38,99 @@ class TransactionController extends Controller
         ]);
 
         $user = Auth::user();
-        $amount = $validated['amount'];
+        $bank = Bank::find($validated['bank_id']);
 
-        if ($validated['type'] === 'outcome') {
-            if ($user->balance < $amount) {
-                return response()->json(['message' => 'Insufficient balance'], 422);
-            }
-            $user->balance -= $amount;
-        } else {
-            $user->balance += $amount;
+        // bank must belong to the authenticated user
+        if (!$bank || $bank->user_id !== $user->id) {
+            return response()->json(['message' => 'Invalid bank selected'], 422);
         }
 
-        $user->save();
+        try {
+            DB::beginTransaction();
 
-        $transaction = Transaction::create(array_merge($validated, ['user_id' => $user->id]));
+            $amount = $validated['amount'];
 
-        return response()->json($transaction, 201);
+            if ($validated['type'] === 'outcome') {
+                if ($user->balance < $amount) {
+                    DB::rollBack();
+                    return response()->json(['message' => 'Insufficient balance'], 422);
+                }
+                $user->decrement('balance', $amount);
+            } else {
+                $user->increment('balance', $amount);
+            }
+
+            $transaction = $user->transactions()->create($validated);
+
+            DB::commit();
+
+            return response()->json($transaction, 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'An unexpected error occurred.'], 500);
+        }
     }
 
     public function show($id)
     {
-        $transaction = Transaction::with(['user', 'bank'])->findOrFail($id);
+        $transaction = Transaction::with(['user', 'bank'])->find($id);
 
-        if ($transaction->user_id !== Auth::id()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if (!$transaction || $transaction->user_id !== Auth::id()) {
+            return response()->json(['message' => 'Transaction not found'], 404);
         }
 
         return $transaction;
     }
 
-    public function update(Request $request, $id)
+    public function createFromSms(Request $request)
     {
-        $transaction = Transaction::findOrFail($id);
-
-        if ($transaction->user_id !== Auth::id()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
         $validated = $request->validate([
-            'bank_id' => 'sometimes|exists:banks,id',
-            'type' => 'sometimes|in:income,outcome',
-            'amount' => 'sometimes|numeric|min:0.01',
+            'bank_name' => 'required|string|max:255',
+            'amount' => 'required|numeric|min:0.01',
+            'type' => 'required|in:income,outcome',
+            'date' => 'required|date',
             'description' => 'nullable|string',
-            'date' => 'sometimes|date',
         ]);
 
         $user = Auth::user();
-        $oldAmount = $transaction->amount;
-        $newAmount = $validated['amount'] ?? $oldAmount;
+        
+        try {
+            DB::beginTransaction();
 
-        if ($validated['type'] ?? $transaction->type === 'outcome') {
-            $user->balance += $oldAmount;
-            if ($user->balance < $newAmount) {
-                $user->balance -= $oldAmount; // revert change
-                return response()->json(['message' => 'Insufficient balance'], 422);
+            $bank = Bank::firstOrCreate(
+                ['user_id' => $user->id, 'name' => $validated['bank_name']]
+            );
+
+            if ($validated['type'] === 'outcome') {
+                if ($user->balance < $validated['amount']) {
+                    DB::rollBack();
+                    return response()->json(['message' => 'Insufficient balance'], 422);
+                }
+                $user->decrement('balance', $validated['amount']);
+            } else {
+                $user->increment('balance', $validated['amount']);
             }
-            $user->balance -= $newAmount;
-        } else {
-            $user->balance -= $oldAmount;
-            $user->balance += $newAmount;
+
+            $transaction = Transaction::create([
+                'user_id' => $user->id,
+                'bank_id' => $bank->id,
+                'type' => $validated['type'],
+                'amount' => $validated['amount'],
+                'description' => $validated['description'] ?? 'Transaction from SMS',
+                'date' => $validated['date'],
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Transaction created successfully from SMS',
+                'transaction' => $transaction
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'An unexpected error occurred.'], 500);
         }
-
-        $user->save();
-
-        $transaction->update($validated);
-
-        return response()->json($transaction);
-    }
-
-    public function destroy($id)
-    {
-        $transaction = Transaction::findOrFail($id);
-
-        if ($transaction->user_id !== Auth::id()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $user = Auth::user();
-        if ($transaction->type === 'outcome') {
-            $user->balance += $transaction->amount;
-        } else {
-            $user->balance -= $transaction->amount;
-        }
-
-        $user->save();
-
-        $transaction->delete();
-
-        return response()->json(null, 204);
     }
 }
