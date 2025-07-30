@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\Account;
+use App\Models\Transaction;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -10,7 +13,7 @@ class Bank extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'name', 'branch', 'account_number', 'iban'];
+    protected $fillable = ['name', 'code', 'country'];
 
     public function user()
     {
@@ -20,5 +23,10 @@ class Bank extends Model
     public function transactions()
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function accounts()
+    {
+        return $this->hasMany(Account::class);
     }
 }
