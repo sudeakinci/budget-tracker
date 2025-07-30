@@ -11,13 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('banks', function (Blueprint $table) {
+        Schema::create('accounts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('name');
-            $table->string('branch')->nullable();
-            $table->string('account_number')->nullable();
-            $table->string('iban')->nullable();
+            $table->foreignId('bank_id')->constrained()->onDelete('restrict');
+            $table->decimal('initial_amount', 15, 2);
+            $table->decimal('balance', 15, 2)->default(0.00);
             $table->timestamps();
         });
     }
@@ -27,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('banks');
+        Schema::dropIfExists('accounts');
     }
 };

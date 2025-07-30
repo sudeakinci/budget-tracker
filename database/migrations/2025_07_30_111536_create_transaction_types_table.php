@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->decimal('balance', 15, 2)->default(0);
+        Schema::create('transaction_types', function (Blueprint $table) {
+            $table->tinyIncrements('id');
+            $table->string('name', 50)->unique();
         });
     }
 
@@ -21,8 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('balance');
-        });
+        Schema::dropIfExists('transaction_types');
     }
 };
