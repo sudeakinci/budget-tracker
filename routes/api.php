@@ -16,7 +16,7 @@ Route::post('logout', [AuthController::class, 'logout']);
 Route::apiResource('banks', BankController::class);
 Route::apiResource('accounts', AccountController::class);
 Route::apiResource('transactionTypes', TransactionTypeController::class);
-Route::apiResource('transactions', TransactionController::class)->except(['update', 'destroy']);
+Route::apiResource('transactions', TransactionController::class);
 Route::apiResource('users', UserController::class)->except(['store']);
 
 
