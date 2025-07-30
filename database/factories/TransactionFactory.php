@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\Bank;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,6 +19,8 @@ class TransactionFactory extends Factory
     public function definition(): array
     {
         return [
+            "user_id" => User::query()->inRandomOrder()->first()?->id ?? User::factory(),
+            "bank_id" => Bank::query()->inRandomOrder()->first()?->id ?? Bank::factory(),
             "type" => $this->faker->randomElement(['income', 'outcome']),
             "amount" => $this->faker->randomFloat(2, 10, 500),
             "description" => $this->faker->sentence(),
