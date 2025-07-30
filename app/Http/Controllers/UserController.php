@@ -15,7 +15,21 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        return $request->user();
+        // return $request->user();
+        return User::all();
+    }
+
+    /**
+     * Display the specified user.
+     */
+    public function show(Request $request, string $id)
+    {
+        // return $request->user();
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+        return $user;
     }
 
     /**
@@ -23,7 +37,8 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $user = Auth::user();
+        // $user = Auth::user();
+        $user = User::find($id);
         if ($user->id != $id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
@@ -54,7 +69,8 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        $user = Auth::user();
+        // $user = Auth::user();
+        $user = User::find($id);
         if ($user->id != $id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }

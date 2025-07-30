@@ -12,7 +12,8 @@ class TransactionController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Auth::user()->transactions()->with(['user', 'bank']);
+        // $query = Auth::user()->transactions()->with(['user', 'bank']);
+        $query = Transaction::with(['user', 'bank']);
 
         // Optional: Filter by is_income (true/false)
         if ($request->has('is_income')) {
@@ -30,6 +31,7 @@ class TransactionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'user_id' => 'required|exists:users,id', //remove this line for auth-less testing
             'bank_id' => 'required|exists:banks,id',
             'is_income' => 'required|boolean',
             'amount' => 'required|numeric|min:0.01',
@@ -37,12 +39,14 @@ class TransactionController extends Controller
             'date' => 'required|date',
         ]);
 
-        $user = Auth::user();
+        // $user = Auth::user();
+        $user = \App\Models\User::find($validated['user_id']);
         $bank = Bank::find($validated['bank_id']);
 
         // bank must belong to the authenticated user
         if (!$bank || $bank->user_id !== $user->id) {
-            return response()->json(['message' => 'Invalid bank selected'], 422);
+            // return response()->json(['message' => 'Invalid bank selected'], 422);
+            return response()->json(['message' => 'Invalid bank selected for this user'], 422);
         }
 
         try {
@@ -51,10 +55,10 @@ class TransactionController extends Controller
             $amount = $validated['amount'];
 
             if (!$validated['is_income']) {
-                if ($user->balance < $amount) {
-                    DB::rollBack();
-                    return response()->json(['message' => 'Insufficient balance'], 422);
-                }
+                // if ($user->balance < $amount) {
+                //     DB::rollBack();
+                //     return response()->json(['message' => 'Insufficient balance'], 422);
+                // }
                 $user->decrement('balance', $amount);
             } else {
                 $user->increment('balance', $amount);
@@ -76,7 +80,8 @@ class TransactionController extends Controller
     {
         $transaction = Transaction::with(['user', 'bank'])->find($id);
 
-        if (!$transaction || $transaction->user_id !== Auth::id()) {
+        // if (!$transaction || $transaction->user_id !== Auth::id()) {
+        if (!$transaction) {
             return response()->json(['message' => 'Transaction not found'], 404);
         }
 
