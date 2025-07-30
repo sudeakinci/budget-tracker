@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('transaction_types', function (Blueprint $table) {
             $table->tinyIncrements('id');
             $table->string('name', 50)->unique();
+            $table->timestamps();
         });
     }
 
