@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Bank;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class BankController extends Controller
 {
@@ -13,7 +12,6 @@ class BankController extends Controller
      */
     public function index()
     {
-        // return Auth::user()->banks;
         return Bank::all();
     }
 
@@ -23,13 +21,11 @@ class BankController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'branch' => 'nullable|string|max:255',
-            'account_number' => 'nullable|string|max:255',
-            'iban' => 'nullable|string|max:255',
+            'name' => 'required|string|max:255|unique:banks',
+            'code' => 'nullable|string|max:20',
+            'country' => 'nullable|string|max:100',
         ]);
 
-        // $bank = Auth::user()->banks()->create($validated);
         $bank = Bank::create($validated);
 
         return response()->json($bank, 201);
@@ -40,9 +36,6 @@ class BankController extends Controller
      */
     public function show(Bank $bank)
     {
-        // if ($bank->user_id !== Auth::id()) {
-        //     return response()->json(['message' => 'Unauthorized'], 403);
-        // }
         return $bank;
     }
 
@@ -51,15 +44,10 @@ class BankController extends Controller
      */
     public function update(Request $request, Bank $bank)
     {
-        // if ($bank->user_id !== Auth::id()) {
-        //     return response()->json(['message' => 'Unauthorized'], 403);
-        // }
-
         $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'branch' => 'nullable|string|max:255',
-            'account_number' => 'nullable|string|max:255',
-            'iban' => 'nullable|string|max:255',
+            'name' => 'sometimes|string|max:255|unique:banks,name,' . $bank->id,
+            'code' => 'nullable|string|max:20',
+            'country' => 'nullable|string|max:100',
         ]);
 
         $bank->update($validated);
@@ -72,10 +60,6 @@ class BankController extends Controller
      */
     public function destroy(Bank $bank)
     {
-        // if ($bank->user_id !== Auth::id()) {
-        //     return response()->json(['message' => 'Unauthorized'], 403);
-        // }
-
         $bank->delete();
         
         return response()->json(null, 204);
