@@ -11,7 +11,7 @@ class Transaction extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['account_id', 'user_id', 'counterparty_email', 'amount', 'description', 'transaction_type_id'];
+    protected $fillable = ['sender_account_id', 'sender_id', 'receiver_account_id', 'receiver_id', 'amount', 'description', 'transaction_type_id'];
 
     protected $casts = [
         'is_income' => 'boolean',

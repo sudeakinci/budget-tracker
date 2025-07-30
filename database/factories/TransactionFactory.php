@@ -2,8 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\Bank;
+use App\Models\Account;
 use App\Models\User;
+use App\Models\TransactionType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,13 +19,27 @@ class TransactionFactory extends Factory
      */
     public function definition(): array
     {
+        $sender = User::inRandomOrder()->first() ?? User::factory()->create();
+        do {
+            $receiver = User::inRandomOrder()->first() ?? User::factory()->create();
+        } while ($receiver->id === $sender->id);
+
+        // accounts
+        $senderAccount = Account::where('user_id', $sender->id)->inRandomOrder()->first() ?? Account::factory()->create(['user_id' => $sender->id]);
+        $receiverAccount = Account::where('user_id', $receiver->id)->inRandomOrder()->first() ?? Account::factory()->create(['user_id' => $receiver->id]);
+
+        $transactionType = TransactionType::inRandomOrder()->first() ?? TransactionType::factory()->create();
+
         return [
-            "user_id" => User::query()->inRandomOrder()->first()?->id ?? User::factory(),
-            "bank_id" => Bank::query()->inRandomOrder()->first()?->id ?? Bank::factory(),
+            'sender_account_id' => $senderAccount->id,
+            'sender_id' => $sender->id,
+            'receiver_account_id' => $receiverAccount->id,
+            'receiver_id' => $receiver->id,
+            'amount' => $this->faker->randomFloat(2, 10, 500),
             'is_income' => $this->faker->boolean(),
-            "amount" => $this->faker->randomFloat(2, 10, 500),
-            "description" => $this->faker->sentence(),
-            "date" => $this->faker->dateTimeBetween('-1 year', 'now'),
+            'description' => $this->faker->sentence(),
+            'transaction_type_id' => $transactionType->id,
+            'date' => now(),
         ];
     }
 }
