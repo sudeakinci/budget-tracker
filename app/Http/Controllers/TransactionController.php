@@ -14,9 +14,9 @@ class TransactionController extends Controller
     {
         $query = Auth::user()->transactions()->with(['user', 'bank']);
 
-        // Optional: Filter by type (income/outcome)
-        if ($request->has('type')) {
-            $query->where('type', $request->input('type'));
+        // Optional: Filter by is_income (true/false)
+        if ($request->has('is_income')) {
+            $query->where('is_income', filter_var($request->input('is_income'), FILTER_VALIDATE_BOOLEAN));
         }
 
         // Optional: Filter by date range
@@ -31,7 +31,7 @@ class TransactionController extends Controller
     {
         $validated = $request->validate([
             'bank_id' => 'required|exists:banks,id',
-            'type' => 'required|in:income,outcome',
+            'is_income' => 'required|boolean',
             'amount' => 'required|numeric|min:0.01',
             'description' => 'nullable|string',
             'date' => 'required|date',
@@ -50,7 +50,7 @@ class TransactionController extends Controller
 
             $amount = $validated['amount'];
 
-            if ($validated['type'] === 'outcome') {
+            if (!$validated['is_income']) {
                 if ($user->balance < $amount) {
                     DB::rollBack();
                     return response()->json(['message' => 'Insufficient balance'], 422);

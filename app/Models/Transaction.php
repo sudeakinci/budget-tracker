@@ -9,7 +9,12 @@ class Transaction extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'bank_id', 'type', 'amount', 'description', 'date'];
+    protected $fillable = ['user_id', 'bank_id', 'is_income', 'amount', 'description', 'date'];
+
+    protected $casts = [
+        'is_income' => 'boolean',
+        'date' => 'date',
+    ];
 
     public function user()
     {

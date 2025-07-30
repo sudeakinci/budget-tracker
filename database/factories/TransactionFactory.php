@@ -21,7 +21,7 @@ class TransactionFactory extends Factory
         return [
             "user_id" => User::query()->inRandomOrder()->first()?->id ?? User::factory(),
             "bank_id" => Bank::query()->inRandomOrder()->first()?->id ?? Bank::factory(),
-            "type" => $this->faker->randomElement(['income', 'outcome']),
+            'is_income' => $this->faker->boolean(),
             "amount" => $this->faker->randomFloat(2, 10, 500),
             "description" => $this->faker->sentence(),
             "date" => $this->faker->dateTimeBetween('-1 year', 'now'),
