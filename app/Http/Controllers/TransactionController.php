@@ -3,75 +3,95 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
-use App\Models\Account;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
     public function index(Request $request)
     {
-        try {
-            $query = Transaction::with(['sender', 'receiver', 'senderAccount', 'receiverAccount', 'transactionType']);
+        // $user = Auth::user();
+        // if (!$user) {
+        //     return response()->json(['message' => 'Unauthorized'], 401);
+        // }
+        $userId = $request->input('user_id');
 
-            if ($request->has('is_income')) {
-                $query->where('is_income', filter_var($request->input('is_income'), FILTER_VALIDATE_BOOLEAN));
+        try {
+            $query = Transaction::with(['owner', 'user']);
+            // ->where(function ($q) use ($user) {
+            //     $q->where('owner', $user->id)
+            //         ->orWhere('user_id', $user->id);
+            // })
+            // ->select(
+            //     'transactions.*',
+            //     DB::raw(
+            //         'CASE 
+            //                 WHEN transactions.owner = ' . $user->id . ' THEN transactions.amount * -1
+            //                 ELSE transactions.amount
+            //                 END as amount'
+            //     )
+            // );
+            if ($userId) {
+                $query->where(function ($q) use ($userId) {
+                    $q->where('owner', $userId)
+                        ->orWhere('user_id', $userId);
+                })
+                    ->select(
+                        'transactions.*',
+                        DB::raw(
+                            'CASE 
+                            WHEN transactions.owner = ' . $userId . ' THEN transactions.amount * -1
+                            ELSE transactions.amount
+                        END as amount'
+                        )
+                    );
             }
 
             if ($request->has('start_date') && $request->has('end_date')) {
-                $query->whereBetween('date', [$request->input('start_date'), $request->input('end_date')]);
+                $query->whereBetween('created_at', [$request->input('start_date'), $request->input('end_date')]);
             }
 
             $result = $query->latest()->paginate(10);
+            return response()->json($result);
 
-            if ($result->isEmpty()) {
-                return response()->json(['message' => 'No transactions found'], 404);
-            }
 
         } catch (\Exception $e) {
-            return response()->json(['message' => 'An unexpected error occurred.'], 500);
+            return response()->json(['message' => 'No transaction found'], 404);
         }
-
-        return response()->json($result);
     }
 
     public function store(Request $request)
     {
+        $validatedData = $request->validate([
+            'owner' => 'required|exists:users,id',
+            'user_id' => 'nullable|exists:users,id',
+            'amount' => 'required|numeric|min:0.01',
+            'description' => 'nullable|string',
+            'payment_term' => 'required|string',
+        ]);
         try {
-            $validatedData = $request->validate([
-                'sender_account_id' => 'required|exists:accounts,id',
-                'receiver_account_id' => 'required|exists:accounts,id', // |different:sender_account_id
-                'amount' => 'required|numeric|min:0.01',
-                'description' => 'nullable|string',
-                'transaction_type_id' => 'required|exists:transaction_types,id',
-                'date' => 'required|date',
-            ]);
-
-            $senderAccount = Account::find($validatedData['sender_account_id']);
-            $receiverAccount = Account::find($validatedData['receiver_account_id']);
-
-            if ($senderAccount->balance < $validatedData['amount']) {
-                return response()->json([
-                    'message' => 'Insufficient balance',
-                    'errors' => ['amount' => ['Sender account balance is insufficient']]
-                ], 422);
-            }
+            // $owner = Auth::user();
+            // if (!$owner) {
+            //     return response()->json(['message' => 'Unauthorized'], 401);
+            // }
+            // $validatedData = $request->validate([
+            //     'owner' => 'required|exists:users,id',
+            //     'user_id' => 'nullable|exists:users,id',
+            //     'amount' => 'required|numeric|min:0.01',
+            //     'description' => 'nullable|string',
+            //     'payment_term' => 'required|string',
+            // ]);
 
             DB::beginTransaction();
 
-            $senderAccount->decrement('balance', $validatedData['amount']);
-            $receiverAccount->increment('balance', $validatedData['amount']);
-
             $transaction = Transaction::create([
-                'sender_account_id' => $validatedData['sender_account_id'],
-                'sender_id' => $senderAccount->user_id,
-                'receiver_account_id' => $validatedData['receiver_account_id'],
-                'receiver_id' => $receiverAccount->user_id,
+                // 'owner' => $owner->id,
+                'owner' => $validatedData['owner'],
+                'user_id' => $validatedData['user_id'] ?? null,
                 'amount' => $validatedData['amount'],
                 'description' => $validatedData['description'],
-                'transaction_type_id' => $validatedData['transaction_type_id'],
-                'is_income' => false,
-                'date' => $validatedData['date'],
+                'payment_term' => $validatedData['payment_term'],
             ]);
 
             DB::commit();
@@ -82,16 +102,13 @@ class TransactionController extends Controller
                 'message' => 'Validation Error',
                 'errors' => $e->errors()
             ], 422);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['message' => 'An unexpected error occurred.'], 500);
         }
     }
 
     public function show($id)
     {
         try {
-            $transaction = Transaction::with(['sender', 'receiver', 'senderAccount', 'receiverAccount', 'transactionType'])->find($id);
+            $transaction = Transaction::with(['owner', 'user'])->find($id);
 
             if (!$transaction) {
                 return response()->json(['message' => 'Transaction not found'], 404);
@@ -103,38 +120,29 @@ class TransactionController extends Controller
         return response()->json($transaction);
     }
 
-    public function destroy($id)
+    public function destroy($id, Request $request)
     {
+        // $user = Auth::user();
+        // if (!$user) {
+        //     return response()->json(['message' => 'Unauthorized'], 401);
+        // }
+
         $transaction = Transaction::find($id);
 
         if (!$transaction) {
             return response()->json(['message' => 'Transaction not found'], 404);
         }
 
+        //only owner can delete the transaction
+        // if ($transaction->owner != $user->id) {
+        //     return response()->json(['message' => 'You are not authorized to delete this transaction.'], 403);
+        // }
+
         try {
-            DB::beginTransaction();
-
-            $senderAccount = Account::find($transaction->sender_account_id);
-            $receiverAccount = Account::find($transaction->receiver_account_id);
-
-            if ($transaction->is_income) {
-                // if income transaction, revert decrementing receiver and incrementing sender
-                $receiverAccount->decrement('balance', $transaction->amount);
-                $senderAccount->increment('balance', $transaction->amount);
-            } else {
-                // if outcome transaction, revert incrementing sender and decrementing receiver
-                $senderAccount->increment('balance', $transaction->amount);
-                $receiverAccount->decrement('balance', $transaction->amount);
-            }
-
             $transaction->delete();
-
-            DB::commit();
-
             return response()->json(['message' => 'Transaction deleted successfully']);
         } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['message' => 'An unexpected error occurred.'], 502); // Bad Gateway
+            return response()->json(['message' => 'An unexpected error occurred.'], 502);
         }
     }
 }
