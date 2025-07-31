@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use App\Models\Bank;
+use App\Models\PaymentTerm;
 use App\Models\Transaction;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -15,22 +15,27 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // clen the tables before seeding for a fresh start
+        // clear the tables
         DB::statement('SET FOREIGN_KEY_CHECKS=0');
-        User::truncate();
-        Bank::truncate();
         Transaction::truncate();
+        PaymentTerm::truncate();
+        User::truncate();
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
+        // create 10 users
         User::factory(10)->create()->each(function ($user) {
-            // for each user, create 2 bank accounts
-            Bank::factory(2)->create([
+            // create 2 payment methods for each user
+            PaymentTerm::factory(2)->create([
                 'user_id' => $user->id,
-            ])->each(function ($bank) {
-                // for each bank account, create 5 transactions
+            ])->each(function ($paymentTerm) use ($user) {
+                // create 5 transactions for each payment method
                 Transaction::factory(5)->create([
-                    'user_id' => $bank->user_id,
-                    'bank_id' => $bank->id,
+                    'owner' => $user->id,
+                    // user_id sometimes null, sometimes a different user
+                    'user_id' => (rand(0, 1) === 1)
+                        ? User::where('id', '!=', $user->id)->inRandomOrder()->first()?->id
+                        : null,
+                    'payment_term' => $paymentTerm->name,
                 ]);
             });
         });
