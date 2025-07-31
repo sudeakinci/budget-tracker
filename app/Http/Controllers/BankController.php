@@ -22,7 +22,6 @@ class BankController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:banks',
-            'code' => 'nullable|string|max:20',
             'country' => 'nullable|string|max:100',
         ]);
 
@@ -46,7 +45,6 @@ class BankController extends Controller
     {
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255|unique:banks,name,' . $bank->id,
-            'code' => 'nullable|string|max:20',
             'country' => 'nullable|string|max:100',
         ]);
 

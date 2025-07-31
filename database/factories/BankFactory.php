@@ -19,7 +19,6 @@ class BankFactory extends Factory
     {
         return [
             'name' => fake()->company(),
-            'code' => fake()->biasedNumberBetween(5),
             'country' => fake()->country(),
         ];
     }

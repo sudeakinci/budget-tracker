@@ -12,7 +12,7 @@ class Bank extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'code', 'country'];
+    protected $fillable = ['name', 'country'];
 
     public function transactions()
     {

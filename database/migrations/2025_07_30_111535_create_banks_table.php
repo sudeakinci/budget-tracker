@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('banks', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
-            $table->string('code', 20)->nullable();
             $table->string('country', 100)->nullable();
             $table->timestamps();
         });
