@@ -39,29 +39,39 @@ class UserController extends Controller
     {
         // $user = Auth::user();
         $user = User::find($id);
-        if ($user->id != $id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
         }
 
-        $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'email' => [
-                'sometimes',
-                'string',
-                'email',
-                'max:255',
-                Rule::unique('users')->ignore($user->id),
-            ],
-            'password' => 'sometimes|string|min:8|confirmed',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'sometimes|string|max:255',
+                'email' => [
+                    'sometimes',
+                    'string',
+                    'email',
+                    'max:255',
+                    Rule::unique('users')->ignore($user->id),
+                ],
+                'password' => 'sometimes|string|min:8|confirmed',
+            ]);
 
-        if (isset($validated['password'])) {
-            $validated['password'] = Hash::make($validated['password']);
+            if (isset($validated['password'])) {
+                $validated['password'] = Hash::make($validated['password']);
+            }
+
+            $user->update($validated);
+
+            return response()->json($user);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation Error',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'An unexpected error occurred.'], 502);
         }
 
-        $user->update($validated);
-
-        return response()->json($user);
     }
 
     /**
@@ -71,8 +81,8 @@ class UserController extends Controller
     {
         // $user = Auth::user();
         $user = User::find($id);
-        if ($user->id != $id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
         }
 
         $user->delete();

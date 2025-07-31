@@ -11,17 +11,28 @@ class TransactionController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Transaction::with(['sender', 'receiver', 'senderAccount', 'receiverAccount', 'transactionType']);
+        try {
+            $query = Transaction::with(['sender', 'receiver', 'senderAccount', 'receiverAccount', 'transactionType']);
 
-        if ($request->has('is_income')) {
-            $query->where('is_income', filter_var($request->input('is_income'), FILTER_VALIDATE_BOOLEAN));
+            if ($request->has('is_income')) {
+                $query->where('is_income', filter_var($request->input('is_income'), FILTER_VALIDATE_BOOLEAN));
+            }
+
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $query->whereBetween('date', [$request->input('start_date'), $request->input('end_date')]);
+            }
+
+            $result = $query->latest()->paginate(10);
+
+            if ($result->isEmpty()) {
+                return response()->json(['message' => 'No transactions found'], 404);
+            }
+
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'An unexpected error occurred.'], 500);
         }
 
-        if ($request->has('start_date') && $request->has('end_date')) {
-            $query->whereBetween('date', [$request->input('start_date'), $request->input('end_date')]);
-        }
-
-        return $query->latest()->paginate(15);
+        return response()->json($result);
     }
 
     public function store(Request $request)
@@ -79,10 +90,14 @@ class TransactionController extends Controller
 
     public function show($id)
     {
-        $transaction = Transaction::with(['sender', 'receiver', 'senderAccount', 'receiverAccount', 'transactionType'])->find($id);
+        try {
+            $transaction = Transaction::with(['sender', 'receiver', 'senderAccount', 'receiverAccount', 'transactionType'])->find($id);
 
-        if (!$transaction) {
-            return response()->json(['message' => 'Transaction not found'], 404);
+            if (!$transaction) {
+                return response()->json(['message' => 'Transaction not found'], 404);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'An unexpected error occurred.'], 502);
         }
 
         return response()->json($transaction);
@@ -119,7 +134,7 @@ class TransactionController extends Controller
             return response()->json(['message' => 'Transaction deleted successfully']);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => 'An unexpected error occurred.'], 500);
+            return response()->json(['message' => 'An unexpected error occurred.'], 502); // Bad Gateway
         }
     }
 }

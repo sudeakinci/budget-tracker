@@ -12,7 +12,12 @@ class BankController extends Controller
      */
     public function index()
     {
-        return Bank::all();
+        try {
+            $banks = Bank::all();
+            return response()->json($banks, 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'An unexpected error occurred.'], 404); // Not Found
+        }
     }
 
     /**
@@ -20,14 +25,19 @@ class BankController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:banks',
-            'country' => 'nullable|string|max:100',
-        ]);
-
-        $bank = Bank::create($validated);
-
-        return response()->json($bank, 201);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255|unique:banks',
+                'country' => 'nullable|string|max:100',
+            ]);
+            $bank = Bank::create($validated);
+            return response()->json($bank, 201);
+        }catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation Error',
+                'errors' => $e->errors()
+            ], 422);
+        }
     }
 
     /**
@@ -56,10 +66,16 @@ class BankController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Bank $bank)
+    public function destroy($id)
     {
+        $bank = Bank::find($id);
+
+        if (!$bank) {
+            return response()->json(['message' => 'Bank not found'], 404);
+        }
+    
         $bank->delete();
-        
-        return response()->json(null, 204);
+
+        return response()->json(null, 204); // no Content
     }
 }
