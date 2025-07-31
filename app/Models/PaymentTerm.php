@@ -8,14 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 
-class Bank extends Model
+class PaymentTerm extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'country'];
+    protected $fillable = ['name'];
 
-    public function transactions()
-    {
-        return $this->hasMany(Transaction::class);
-    }
+    public $timestamps = false;
 }

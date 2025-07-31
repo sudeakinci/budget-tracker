@@ -11,10 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('transaction_types', function (Blueprint $table) {
-            $table->tinyIncrements('id');
-            $table->string('name', 50)->unique();
-            $table->timestamps();
+        Schema::rename('banks', 'payment_terms');
+        Schema::table('payment_terms', function (Blueprint $table) {
+            $table->dropColumn(['country']);
         });
     }
 
@@ -23,6 +22,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('transaction_types');
+        Schema::table('payment_terms', function (Blueprint $table) {
+            $table->string('country', 100)->nullable();
+        });
+        Schema::rename('payment_terms', 'banks');
     }
 };

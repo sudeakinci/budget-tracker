@@ -12,15 +12,15 @@ return new class extends Migration {
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('sender_account_id')->constrained('accounts')->onDelete('cascade');
+            // $table->foreignId('sender_account_id')->constrained('accounts')->onDelete('cascade');
             $table->foreignId('sender_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('receiver_account_id')->constrained('accounts')->onDelete('cascade');
-            $table->foreignId('receiver_id')->constrained('users')->onDelete('cascade');
+            // $table->foreignId('receiver_account_id')->constrained('accounts')->onDelete('cascade');
+            // $table->foreignId('receiver_id')->constrained('users')->onDelete('cascade');
             $table->decimal('amount', 15, 2);
             $table->boolean('is_income');
             $table->text('description')->nullable();
-            $table->unsignedTinyInteger(column: 'transaction_type_id')->nullable();
-            $table->foreign('transaction_type_id')->references('id')->on('transaction_types');
+            // $table->unsignedTinyInteger(column: 'transaction_type_id')->nullable();
+            // $table->foreign('transaction_type_id')->references('id')->on('transaction_types');
             $table->date('date');
             $table->timestamps();
         });
