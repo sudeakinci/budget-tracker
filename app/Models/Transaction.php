@@ -28,19 +28,4 @@ class Transaction extends Model
     {
         return $this->belongsTo(User::class, 'receiver_id');
     }
-
-    public function senderAccount()
-    {
-        return $this->belongsTo(Account::class, 'sender_account_id');
-    }
-
-    public function receiverAccount()
-    {
-        return $this->belongsTo(Account::class, 'receiver_account_id');
-    }
-
-    public function transactionType()
-    {
-        return $this->belongsTo(TransactionType::class);
-    }
 }
