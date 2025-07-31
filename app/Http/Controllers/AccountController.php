@@ -14,8 +14,12 @@ class AccountController extends Controller
      */
     public function index()
     {
-        $accounts = Account::all();
-        return response()->json($accounts);
+        try {
+            $accounts = Account::with('bank')->get();
+            return response()->json($accounts, 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'An unexpected error occurred.'], 404); // Not Found
+        }
     }
 
     /**
@@ -32,12 +36,12 @@ class AccountController extends Controller
             ]);
 
             $account = Account::create($validatedData);
-            return response()->json($account, 201);
+            return response()->json($account, 201); // Created
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validation Error',
                 'errors' => $e->errors()
-            ], 422);
+            ], 422); // Unprocessable Content
         }
     }
 
@@ -58,7 +62,6 @@ class AccountController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                'user_id' => 'sometimes|required|exists:users,id',
                 'bank_id' => 'sometimes|required|exists:banks,id',
                 'balance' => 'sometimes|required|numeric|min:0',
             ]);
@@ -69,7 +72,7 @@ class AccountController extends Controller
             return response()->json([
                 'message' => 'Validation Error',
                 'errors' => $e->errors()
-            ], 422);
+            ], 422); // Unprocessable Content
         }
     }
 
@@ -77,8 +80,14 @@ class AccountController extends Controller
      * Remove the specified account from storage.
      *
      */
-    public function destroy(Account $account)
+    public function destroy($id)
     {
+        $account = Account::find($id);
+
+        if(!$account) {
+            return response()->json(['message' => 'Account not found'], 404);
+        }
+
         $account->delete();
         return response()->json(null, 204);
     }
