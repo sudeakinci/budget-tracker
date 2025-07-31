@@ -12,20 +12,17 @@ class Transaction extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['sender_account_id', 'sender_id', 'receiver_account_id', 'receiver_id', 'amount', 'description', 'transaction_type_id', 'is_income', 'date'];
+    protected $fillable = ['owner', 'user_id', 'payment_term', 'description', 'amount'];
 
-    protected $casts = [
-        'is_income' => 'boolean',
-        'date' => 'date',
-    ];
+    protected $casts = [];
 
-    public function sender()
+    public function owner()
     {
-        return $this->belongsTo(User::class, 'sender_id');
+        return $this->belongsTo(User::class, 'owner');
     }
 
-    public function receiver()
+    public function user()
     {
-        return $this->belongsTo(User::class, 'receiver_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

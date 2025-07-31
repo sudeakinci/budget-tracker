@@ -2,13 +2,12 @@
 
 namespace Database\Factories;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Bank>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\PaymentTerm>
  */
-class BankFactory extends Factory
+class PaymentTermFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -18,8 +17,7 @@ class BankFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->company(),
-            'country' => fake()->country(),
+            'name' => $this->faker->unique()->word(),
         ];
     }
 }
