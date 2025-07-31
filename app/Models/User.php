@@ -53,6 +53,6 @@ class User extends Authenticatable
     }
 
     public function banks(){
-        return $this->hasMany(Bank::class);
+        return $this->hasMany(PaymentTerm::class);
     }
 }
