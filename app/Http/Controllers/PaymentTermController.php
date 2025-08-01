@@ -16,8 +16,8 @@ class PaymentTermController extends Controller
     {
         try {
             $user = Auth::user();
-            $paymentTerms = PaymentTerm::whereNull('user_id')
-                ->orWhere('user_id', $user->id)
+            $paymentTerms = PaymentTerm::whereNull('created_by')
+                ->orWhere('created_by', $user->id)
                 ->get();
             return response()->json($paymentTerms, 200);
         } catch (\Exception $e) {
@@ -38,14 +38,14 @@ class PaymentTermController extends Controller
                     'string',
                     'max:255',
                     Rule::unique('payment_terms')->where(function ($query) use ($user) {
-                        return $query->where('user_id', $user->id);
+                        return $query->where('created_by', $user->id);
                     }),
                 ],
             ]);
 
             $paymentTerm = PaymentTerm::create([
                 'name' => $validated['name'],
-                'user_id' => $user->id,
+                'created_by' => $user->id,
             ]);
 
             return response()->json($paymentTerm, 201);
@@ -63,7 +63,7 @@ class PaymentTermController extends Controller
     public function show(PaymentTerm $paymentTerm)
     {
         $user = Auth::user();
-        if ($paymentTerm->user_id !== null && $paymentTerm->user_id !== $user->id) {
+        if ($paymentTerm->created_by !== null && $paymentTerm->created_by !== $user->id) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
         return $paymentTerm;
@@ -75,8 +75,8 @@ class PaymentTermController extends Controller
     public function update(Request $request, PaymentTerm $paymentTerm)
     {
         $user = Auth::user();
-        if ($paymentTerm->user_id !== $user->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
+        if ($paymentTerm->created_by !== $user->id) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
 
         $validated = $request->validate([
@@ -85,7 +85,7 @@ class PaymentTermController extends Controller
                 'string',
                 'max:255',
                 Rule::unique('payment_terms')->where(function ($query) use ($user) {
-                    return $query->where('user_id', $user->id);
+                    return $query->where('created_by', $user->id);
                 })->ignore($paymentTerm->id),
             ],
         ]);
@@ -101,8 +101,8 @@ class PaymentTermController extends Controller
     public function destroy(PaymentTerm $paymentTerm)
     {
         $user = Auth::user();
-        if ($paymentTerm->user_id !== $user->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
+        if ($paymentTerm->created_by !== $user->id) {
+            return response()->json(['message' => 'Unauthorized'], 401); // Unauthorized
         }
 
         $paymentTerm->delete();

@@ -22,7 +22,7 @@ class TransactionController extends Controller
             $query = Transaction::with(['owner', 'user'])
                 ->where(function ($q) use ($user) {
                     $q->where('owner', $user->id)
-                        ->orWhere('user_id', $user->id);
+                        ->orWhere('created_by', $user->id);
                 })
                 ->select(
                     'transactions.*',
@@ -33,11 +33,20 @@ class TransactionController extends Controller
                             END as amount'
                     )
                 );
-            if ($request->has('start_date') && $request->has('end_date')) {
-                $query->whereBetween('created_at', [$request->input('start_date'), $request->input('end_date')]);
-            }
 
-            $result = $query->latest()->paginate(10);
+            $transactions = $query->orderByDesc('created_at')->get();
+            $result = $transactions->map(function ($transaction) {
+                return [
+                    'id' => $transaction->id,
+                    'owner' => $transaction->owner,
+                    'user_id' => $transaction->user_id,
+                    'amount' => $transaction->amount,
+                    'description' => $transaction->description,
+                    'payment_term' => $transaction->payment_term_name,
+                    'created_at' => $transaction->created_at,
+                    'updated_at' => $transaction->updated_at,
+                ];
+            });
             return response()->json($result);
 
 
@@ -73,22 +82,22 @@ class TransactionController extends Controller
             if ($paymentTermName) {
                 $paymentTerm = PaymentTerm::where('name', $paymentTermName)
                     ->where(function ($query) use ($owner) {
-                        $query->where('user_id', $owner->id)
-                            ->orWhereNull('user_id');
+                        $query->where('created_by', $owner->id)
+                            ->orWhereNull('created_by');
                     })
-                    ->orderByRaw('user_id IS NOT NULL DESC')
+                    ->orderByRaw('created_by IS NOT NULL DESC')
                     ->first();
 
                 if (!$paymentTerm) {
                     $paymentTerm = PaymentTerm::create([
                         'name' => $paymentTermName,
-                        'user_id' => $owner->id,
+                        'created_by' => $owner->id,
                     ]);
                 }
                 $paymentTermId = $paymentTerm->id;
             } else {
                 $paymentTerm = PaymentTerm::findOrFail($paymentTermId);
-                if ($paymentTerm->user_id !== null && $paymentTerm->user_id !== $owner->id) {
+                if ($paymentTerm->created_by !== null && $paymentTerm->created_by !== $owner->id) {
                     DB::rollBack();
                     return response()->json(['message' => 'Forbidden'], 403);
                 }
