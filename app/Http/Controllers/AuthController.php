@@ -29,7 +29,7 @@ class AuthController extends Controller
             $validated = $request->validate([
                 'name' => 'required|string',
                 'email' => 'required|email|unique:users',
-                'password' => 'required|string|min:6',
+                'password' => 'required|string|min:6|confirmed',
             ]);
         } catch (ValidationException $e) {
             return response()->json([
