@@ -12,7 +12,7 @@ class Transaction extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['owner', 'user_id', 'payment_term', 'description', 'amount'];
+    protected $fillable = ['owner', 'user_id', 'payment_term_id', 'payment_term_name', 'description', 'amount'];
 
     protected $casts = [];
 
@@ -24,5 +24,10 @@ class Transaction extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function paymentTerm()
+    {
+        return $this->belongsTo(PaymentTerm::class);
     }
 }

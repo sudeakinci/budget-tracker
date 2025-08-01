@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\PaymentTerm;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -12,43 +13,26 @@ class TransactionController extends Controller
 {
     public function index(Request $request)
     {
-        // $user = Auth::user();
-        // if (!$user) {
-        //     return response()->json(['message' => 'Unauthorized'], 401);
-        // }
-        $userId = $request->input('user_id');
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
 
         try {
-            $query = Transaction::with(['owner', 'user']);
-            // ->where(function ($q) use ($user) {
-            //     $q->where('owner', $user->id)
-            //         ->orWhere('user_id', $user->id);
-            // })
-            // ->select(
-            //     'transactions.*',
-            //     DB::raw(
-            //         'CASE 
-            //                 WHEN transactions.owner = ' . $user->id . ' THEN transactions.amount * -1
-            //                 ELSE transactions.amount
-            //                 END as amount'
-            //     )
-            // );
-            if ($userId) {
-                $query->where(function ($q) use ($userId) {
-                    $q->where('owner', $userId)
-                        ->orWhere('user_id', $userId);
+            $query = Transaction::with(['owner', 'user'])
+                ->where(function ($q) use ($user) {
+                    $q->where('owner', $user->id)
+                        ->orWhere('user_id', $user->id);
                 })
-                    ->select(
-                        'transactions.*',
-                        DB::raw(
-                            'CASE 
-                            WHEN transactions.owner = ' . $userId . ' THEN transactions.amount * -1
+                ->select(
+                    'transactions.*',
+                    DB::raw(
+                        'CASE 
+                            WHEN transactions.owner = ' . $user->id . ' THEN transactions.amount * -1
                             ELSE transactions.amount
-                        END as amount'
-                        )
-                    );
-            }
-
+                            END as amount'
+                    )
+                );
             if ($request->has('start_date') && $request->has('end_date')) {
                 $query->whereBetween('created_at', [$request->input('start_date'), $request->input('end_date')]);
             }
@@ -69,50 +53,67 @@ class TransactionController extends Controller
             'user_id' => 'nullable|exists:users,id',
             'amount' => 'required|numeric|min:0.01',
             'description' => 'nullable|string',
-            'payment_term' => 'required|string',
+            'payment_term_id' => 'nullable|exists:payment_terms,id',
+            'payment_term_name' => 'required_without:payment_term_id|string|max:255',
         ]);
-        try {
-            // $owner = Auth::user();
-            // if (!$owner) {
-            //     return response()->json(['message' => 'Unauthorized'], 401);
-            // }
-            // $validatedData = $request->validate([
-            //     'owner' => 'required|exists:users,id',
-            //     'user_id' => 'nullable|exists:users,id',
-            //     'amount' => 'required|numeric|min:0.01',
-            //     'description' => 'nullable|string',
-            //     'payment_term' => 'required|string',
-            // ]);
 
+        try {
             DB::beginTransaction();
 
-            if (isset($validatedData['user_id']) && $validatedData['owner'] == $validatedData['user_id']) {
-                return response()->json(['message' => 'Owner and user cannot be the same.'], 422);
-            }
-
             $owner = User::find($validatedData['owner']);
-            $user = null;
-            if (isset($validatedData['user_id'])) {
-                $user = User::find($validatedData['user_id']);
-            }
 
             if ($owner->balance < $validatedData['amount']) {
+                DB::rollBack();
                 return response()->json(['message' => 'Insufficient balance'], 422);
             }
 
+            $paymentTermId = $validatedData['payment_term_id'] ?? null;
+            $paymentTermName = $validatedData['payment_term_name'] ?? null;
+
+            if ($paymentTermName) {
+                $paymentTerm = PaymentTerm::where('name', $paymentTermName)
+                    ->where(function ($query) use ($owner) {
+                        $query->where('user_id', $owner->id)
+                            ->orWhereNull('user_id');
+                    })
+                    ->orderByRaw('user_id IS NOT NULL DESC')
+                    ->first();
+
+                if (!$paymentTerm) {
+                    $paymentTerm = PaymentTerm::create([
+                        'name' => $paymentTermName,
+                        'user_id' => $owner->id,
+                    ]);
+                }
+                $paymentTermId = $paymentTerm->id;
+            } else {
+                $paymentTerm = PaymentTerm::findOrFail($paymentTermId);
+                if ($paymentTerm->user_id !== null && $paymentTerm->user_id !== $owner->id) {
+                    DB::rollBack();
+                    return response()->json(['message' => 'Forbidden'], 403);
+                }
+                $paymentTermName = $paymentTerm->name;
+            }
+
             $transaction = Transaction::create([
-                // 'owner' => $owner->id,
                 'owner' => $validatedData['owner'],
                 'user_id' => $validatedData['user_id'] ?? null,
                 'amount' => $validatedData['amount'],
                 'description' => $validatedData['description'],
-                'payment_term' => $validatedData['payment_term'],
+                'payment_term_id' => $paymentTermId,
+                'payment_term_name' => $paymentTermName,
             ]);
+
+            if (!$transaction) {
+                DB::rollBack();
+                return response()->json(['message' => 'Transaction not created'], 500);
+            }
 
             $owner->balance -= $validatedData['amount'];
             $owner->save();
 
-            if ($user) {
+            if (isset($validatedData['user_id'])) {
+                $user = User::find($validatedData['user_id']);
                 $user->balance += $validatedData['amount'];
                 $user->save();
             }
@@ -121,13 +122,16 @@ class TransactionController extends Controller
 
             return response()->json($transaction, 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
             return response()->json([
                 'message' => 'Validation Error',
                 'errors' => $e->errors()
             ], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'An unexpected error occurred.', 'error' => $e->getMessage()], 502);
         }
     }
-
     public function show($id)
     {
         try {
@@ -145,10 +149,10 @@ class TransactionController extends Controller
 
     public function destroy($id, Request $request)
     {
-        // $user = Auth::user();
-        // if (!$user) {
-        //     return response()->json(['message' => 'Unauthorized'], 401);
-        // }
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
 
         $transaction = Transaction::find($id);
 
@@ -156,10 +160,10 @@ class TransactionController extends Controller
             return response()->json(['message' => 'Transaction not found'], 404);
         }
 
-        //only owner can delete the transaction
-        // if ($transaction->owner != $user->id) {
-        //     return response()->json(['message' => 'You are not authorized to delete this transaction.'], 403);
-        // }
+        // only owner can delete the transaction
+        if ($transaction->owner != $user->id) {
+            return response()->json(['message' => 'You are not authorized to delete this transaction.'], 403);
+        }
 
         try {
             DB::beginTransaction();
