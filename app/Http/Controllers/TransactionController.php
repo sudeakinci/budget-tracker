@@ -99,7 +99,7 @@ class TransactionController extends Controller
                 'owner' => $validatedData['owner'],
                 'user_id' => $validatedData['user_id'] ?? null,
                 'amount' => $validatedData['amount'],
-                'description' => $validatedData['description'],
+                'description' => $validatedData['description'] ?? null,
                 'payment_term_id' => $paymentTermId,
                 'payment_term_name' => $paymentTermName,
             ]);
