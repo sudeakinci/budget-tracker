@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -85,6 +86,20 @@ class TransactionController extends Controller
 
             DB::beginTransaction();
 
+            if (isset($validatedData['user_id']) && $validatedData['owner'] == $validatedData['user_id']) {
+                return response()->json(['message' => 'Owner and user cannot be the same.'], 422);
+            }
+
+            $owner = User::find($validatedData['owner']);
+            $user = null;
+            if (isset($validatedData['user_id'])) {
+                $user = User::find($validatedData['user_id']);
+            }
+
+            if ($owner->balance < $validatedData['amount']) {
+                return response()->json(['message' => 'Insufficient balance'], 422);
+            }
+
             $transaction = Transaction::create([
                 // 'owner' => $owner->id,
                 'owner' => $validatedData['owner'],
@@ -93,6 +108,14 @@ class TransactionController extends Controller
                 'description' => $validatedData['description'],
                 'payment_term' => $validatedData['payment_term'],
             ]);
+
+            $owner->balance -= $validatedData['amount'];
+            $owner->save();
+
+            if ($user) {
+                $user->balance += $validatedData['amount'];
+                $user->save();
+            }
 
             DB::commit();
 
@@ -139,7 +162,23 @@ class TransactionController extends Controller
         // }
 
         try {
+            DB::beginTransaction();
+
+            $owner = User::find($transaction->owner);
+            $user = User::find($transaction->user_id);
+
+            $owner->balance += $transaction->amount;
+            $owner->save();
+
+            if ($user) {
+                $user->balance -= $transaction->amount;
+                $user->save();
+            }
+
             $transaction->delete();
+
+            DB::commit();
+
             return response()->json(['message' => 'Transaction deleted successfully']);
         } catch (\Exception $e) {
             return response()->json(['message' => 'An unexpected error occurred.'], 502);
