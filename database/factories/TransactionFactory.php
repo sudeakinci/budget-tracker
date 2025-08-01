@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\PaymentTerm;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -19,10 +20,13 @@ class TransactionFactory extends Factory
             ? (User::where('id', '!=', $owner->id)->inRandomOrder()->first() ?? User::factory()->create())
             : null;
 
+        $paymentTerm = PaymentTerm::inRandomOrder()->first() ?? PaymentTerm::factory()->create(['user_id' => $owner->id]);
+
         return [
             'owner' => $owner->id,
             'user_id' => $user?->id,
-            'payment_term' => $this->faker->randomElement(['nakit', 'havale', 'eft', 'kredi kartı']),
+            'payment_term_id' => $paymentTerm->id,
+            'payment_term_name' => $paymentTerm->name,
             'description' => $this->faker->sentence(),
             'amount' => $this->faker->randomFloat(2, 10, 10000),
             'created_at' => now(),

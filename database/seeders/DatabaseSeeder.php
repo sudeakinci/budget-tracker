@@ -22,22 +22,17 @@ class DatabaseSeeder extends Seeder
         User::truncate();
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
+        $this->call(PaymentTermSeeder::class);
+
         // create 10 users
         User::factory(10)->create()->each(function ($user) {
-            // create 2 payment methods for each user
+            // create 2 custom payment terms for each user
             PaymentTerm::factory(2)->create([
                 'user_id' => $user->id,
-            ])->each(function ($paymentTerm) use ($user) {
-                // create 5 transactions for each payment method
-                Transaction::factory(5)->create([
-                    'owner' => $user->id,
-                    // user_id sometimes null, sometimes a different user
-                    'user_id' => (rand(0, 1) === 1)
-                        ? User::where('id', '!=', $user->id)->inRandomOrder()->first()?->id
-                        : null,
-                    'payment_term' => $paymentTerm->name,
-                ]);
-            });
+            ]);
         });
+
+        // create 50 transactions
+        Transaction::factory(50)->create();
     }
 }
