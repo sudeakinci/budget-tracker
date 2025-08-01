@@ -11,6 +11,20 @@ class AuthController extends Controller
 {
     public function register(Request $request)
     {
+        $user = User::withTrashed()->where('email', $request->email)->first();
+
+        if ($user) {
+            if ($user->trashed()) {
+                $user->restore();
+                $user->name = $request->name;
+                $user->password = Hash::make($request->password);
+                $user->save();
+                return response()->json($user, 200);
+            } else {
+                return response()->json(['message' => 'User with this email already exists'], 422);
+            }
+        }
+
         try {
             $validated = $request->validate([
                 'name' => 'required|string',
@@ -22,11 +36,6 @@ class AuthController extends Controller
                 'message' => 'Validation Error',
                 'errors' => $e->errors()
             ], 422);
-        }
-
-        $exists = User::where('email', $validated['email'])->exists();
-        if ($exists) {
-            return response()->json(['message' => 'User with this email already exists'], 422);
         }
 
         $validated['password'] = Hash::make($validated['password']);
