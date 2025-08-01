@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\PaymentTerm;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class PaymentTermController extends Controller
 {
@@ -13,10 +15,13 @@ class PaymentTermController extends Controller
     public function index()
     {
         try {
-            $paymentTerms = PaymentTerm::all();
+            $user = Auth::user();
+            $paymentTerms = PaymentTerm::whereNull('user_id')
+                ->orWhere('user_id', $user->id)
+                ->get();
             return response()->json($paymentTerms, 200);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'An unexpected error occurred.'], 404); // Not Found
+            return response()->json(['message' => 'An unexpected error occurred.'], 500);
         }
     }
 
@@ -26,12 +31,25 @@ class PaymentTermController extends Controller
     public function store(Request $request)
     {
         try {
+            $user = Auth::user();
             $validated = $request->validate([
-                'name' => 'required|string|max:255|unique:payment_terms',
+                'name' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    Rule::unique('payment_terms')->where(function ($query) use ($user) {
+                        return $query->where('user_id', $user->id);
+                    }),
+                ],
             ]);
-            $paymentTerm = PaymentTerm::create($validated);
+
+            $paymentTerm = PaymentTerm::create([
+                'name' => $validated['name'],
+                'user_id' => $user->id,
+            ]);
+
             return response()->json($paymentTerm, 201);
-        }catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'message' => 'Validation Error',
                 'errors' => $e->errors()
@@ -44,6 +62,10 @@ class PaymentTermController extends Controller
      */
     public function show(PaymentTerm $paymentTerm)
     {
+        $user = Auth::user();
+        if ($paymentTerm->user_id !== null && $paymentTerm->user_id !== $user->id) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
         return $paymentTerm;
     }
 
@@ -52,8 +74,20 @@ class PaymentTermController extends Controller
      */
     public function update(Request $request, PaymentTerm $paymentTerm)
     {
+        $user = Auth::user();
+        if ($paymentTerm->user_id !== $user->id) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
         $validated = $request->validate([
-            'name' => 'sometimes|string|max:255|unique:payment_terms,name,' . $paymentTerm->id,
+            'name' => [
+                'sometimes',
+                'string',
+                'max:255',
+                Rule::unique('payment_terms')->where(function ($query) use ($user) {
+                    return $query->where('user_id', $user->id);
+                })->ignore($paymentTerm->id),
+            ],
         ]);
 
         $paymentTerm->update($validated);
@@ -64,12 +98,11 @@ class PaymentTermController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id)
+    public function destroy(PaymentTerm $paymentTerm)
     {
-        $paymentTerm = PaymentTerm::find($id);
-
-        if (!$paymentTerm) {
-            return response()->json(['message' => 'Payment Term not found'], 404);
+        $user = Auth::user();
+        if ($paymentTerm->user_id !== $user->id) {
+            return response()->json(['message' => 'Forbidden'], 403);
         }
 
         $paymentTerm->delete();
