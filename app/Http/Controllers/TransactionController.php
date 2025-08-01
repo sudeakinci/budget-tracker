@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
         $user = Auth::user();
         if (!$user) {
@@ -22,7 +22,7 @@ class TransactionController extends Controller
             $query = Transaction::with(['owner', 'user'])
                 ->where(function ($q) use ($user) {
                     $q->where('owner', $user->id)
-                        ->orWhere('created_by', $user->id);
+                        ->orWhere('user_id', $user->id);
                 })
                 ->select(
                     'transactions.*',
@@ -57,8 +57,12 @@ class TransactionController extends Controller
 
     public function store(Request $request)
     {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }   
+
         $validatedData = $request->validate([
-            'owner' => 'required|exists:users,id',
             'user_id' => 'nullable|exists:users,id',
             'amount' => 'required|numeric|min:0.01',
             'description' => 'nullable|string',
@@ -69,7 +73,7 @@ class TransactionController extends Controller
         try {
             DB::beginTransaction();
 
-            $owner = User::find($validatedData['owner']);
+            $owner = $user;
 
             if ($owner->balance < $validatedData['amount']) {
                 DB::rollBack();
@@ -105,7 +109,7 @@ class TransactionController extends Controller
             }
 
             $transaction = Transaction::create([
-                'owner' => $validatedData['owner'],
+                'owner' => $owner->id, 
                 'user_id' => $validatedData['user_id'] ?? null,
                 'amount' => $validatedData['amount'],
                 'description' => $validatedData['description'] ?? null,
@@ -143,10 +147,15 @@ class TransactionController extends Controller
     }
     public function show($id)
     {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
         try {
             $transaction = Transaction::with(['owner', 'user'])->find($id);
 
-            if (!$transaction) {
+            if (!$transaction || ($transaction->owner != $user->id && $transaction->user_id != $user->id)) {
                 return response()->json(['message' => 'Transaction not found'], 404);
             }
         } catch (\Exception $e) {
@@ -156,7 +165,7 @@ class TransactionController extends Controller
         return response()->json($transaction);
     }
 
-    public function destroy($id, Request $request)
+    public function destroy($id)
     {
         $user = Auth::user();
         if (!$user) {
