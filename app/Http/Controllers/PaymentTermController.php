@@ -37,9 +37,17 @@ class PaymentTermController extends Controller
                     'required',
                     'string',
                     'max:255',
-                    Rule::unique('payment_terms')->where(function ($query) use ($user) {
-                        return $query->where('created_by', $user->id);
-                    }),
+                    function ($attribute, $value, $fail) use ($user) {
+                        $exists = PaymentTerm::where('name', $value)
+                            ->where(function ($query) use ($user) {
+                                $query->where('created_by', $user->id)
+                                    ->orWhereNull('created_by');
+                            })
+                            ->exists();
+                        if ($exists) {
+                            $fail('This payment method already exists.');
+                        }
+                    },
                 ],
             ]);
 
@@ -50,13 +58,18 @@ class PaymentTermController extends Controller
 
             return response()->json($paymentTerm, 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
+            if (isset($e->errors()['name'])) {
+                return response()->json([
+                    'message' => 'This payment method already exists.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
             return response()->json([
                 'message' => 'Validation Error',
                 'errors' => $e->errors()
             ], 422);
         }
     }
-
     /**
      * Display the specified resource.
      */
