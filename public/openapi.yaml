@@ -4,7 +4,7 @@ info:
   description: API for managing users, payment terms, and transactions.
   version: 1.0.0
 servers:
-  - url: http://10.190.1.16:8081/api
+  - url: http://127.0.0.1:8081/api
 paths:
   /register:
     post:
@@ -87,10 +87,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
+              $ref: '#/components/schemas/PaymentTermStore'
       responses:
         '201':
           description: Payment term created
@@ -227,6 +224,12 @@ paths:
       summary: Update a user
       security:
         - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
       requestBody:
         required: true
         content:
@@ -284,6 +287,7 @@ components:
         - name
         - email
         - password
+        - password_confirmation
       properties:
         name:
           type: string
@@ -293,6 +297,10 @@ components:
           format: email
           example: john.doe@example.com
         password:
+          type: string
+          format: password
+          example: password123
+        password_confirmation:
           type: string
           format: password
           example: password123
@@ -323,7 +331,11 @@ components:
         password:
           type: string
           format: password
-          example: newpassword123
+          example: newpassword
+        password_confirmation:
+          type: string
+          format: password
+          example: newpassword
     PaymentTerm:
       type: object
       properties:
@@ -333,12 +345,23 @@ components:
         name:
           type: string
           example: "Bank Transfer"
+        created_by:
+          type: integer
+          example: 1
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
+    PaymentTermStore:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "Bank Transfer"
     Transaction:
       type: object
       properties:
@@ -358,7 +381,10 @@ components:
         description:
           type: string
           example: "Monthly salary"
-        payment_term:
+        payment_term_id:
+          type: integer
+          example: 1
+        payment_term_name:
           type: string
           example: "Bank Transfer"
         created_at:
@@ -370,13 +396,8 @@ components:
     TransactionStore:
       type: object
       required:
-        - owner
         - amount
-        - payment_term
       properties:
-        owner:
-          type: integer
-          example: 1
         user_id:
           type: integer
           example: 2
@@ -387,7 +408,10 @@ components:
         description:
           type: string
           example: "Monthly salary"
-        payment_term:
+        payment_term_id:
+          type: integer
+          example: 1
+        payment_term_name:
           type: string
           example: "Bank Transfer"
   securitySchemes:
