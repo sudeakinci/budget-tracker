@@ -37,7 +37,7 @@ class PaymentTermController extends Controller
                     'required',
                     'string',
                     'max:255',
-                    function ($attribute, $value, $fail) use ($user) {
+                    function ($value, $fail) use ($user) {
                         $exists = PaymentTerm::where('name', $value)
                             ->where(function ($query) use ($user) {
                                 $query->where('created_by', $user->id)
