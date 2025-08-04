@@ -16,6 +16,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('payment-terms', PaymentTermController::class);
     Route::apiResource('transactions', TransactionController::class)->except(['update']);
     Route::apiResource('users', UserController::class)->except(['store']);
+    Route::post('sms-integration/{smsSetting}', [SmsIntegrationController::class, 'receiveSms']);
 });
 
-Route::post('sms-integration/{id}', [SmsIntegrationController::class, 'receiveSms']);
