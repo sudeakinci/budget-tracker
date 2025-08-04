@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Transaction;
+use \App\Models\PaymentTerm;
 use Auth;
+use \Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
-use App\Http\Controllers\TransactionController;
 use App\Models\SmsSettings;
 
 class SmsIntegrationController extends Controller
 {
-    public function receiveSms(Request $request, $id)
+    public function receiveSms(Request $request, SmsSettings $smsSetting)
     {
         $user = Auth::user();
         if (!$user) {
@@ -21,49 +23,62 @@ class SmsIntegrationController extends Controller
         if (!$message) {
             return response()->json(['error' => 'Message is required'], 400);
         }
-        $parsed = $this->parseSms($message, $user);
+        $parsed = $this->parseSms($message, $smsSetting);
 
         if (!$parsed) {
             return response()->json(['error' => 'The message format is invalid'], 422);
         }
 
-        $requestForTransaction = Request::create(
-            '/dummy-url', 
-            'POST',
-            $parsed
-        );
+        try {
+            DB::beginTransaction();
 
-        $transactionController = app(TransactionController::class); // dependency injection
+            $paymentTerm = PaymentTerm::findOrFail($parsed['payment_term_id']);
 
-        return $transactionController->store($requestForTransaction);
+            $transaction = Transaction::create([
+                'owner' => $user->id,
+                'amount' => $parsed['amount'],
+                'description' => $parsed['description'],
+                'payment_term_id' => $parsed['payment_term_id'],
+                'payment_term_name' => $paymentTerm->name,
+            ]);
+
+            $user->balance += $parsed['amount'];
+            $user->save();
+
+            DB::commit();
+
+            return response()->json($transaction, 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'An unexpected error occurred.', 'error' => $e->getMessage()], 500);
+        }
     }
 
-    private function parseSms($message, $user)
+    private function parseSms($message, SmsSettings $settings)
     {
-        $settings = SmsSettings::all();
 
-        foreach ($settings as $setting) {
-            if (stripos($message, $setting->keyword) !== false) {
-                // Ziraat formatına uygun şimdilik regex
-                $pattern = '/(\d{2}\.\d{2}\.\d{4}) tarihinde saat (\d{2}:\d{2})\'de (\d+) nolu hesabiniza .*?FAST ile ([\d.,]+)\s*TL (gönderilmiştir|çekilmiştir)/iu';
+        if (stripos($message, $settings->keyword) !== false) {
+            // Ziraat formatına uygun şimdilik regex
+            $pattern = '/(\d{2}\.\d{2}\.\d{4}) tarihinde saat (\d{2}:\d{2})\'de (\d+) nolu hesabiniza .*?FAST ile ([\d.,]+)\s*TL (gönderilmiştir|çekilmiştir)/iu';
 
-                if (preg_match($pattern, $message, $matches)) {
-                    $amount = str_replace('.', '', str_replace(',', '.', $matches[4]));
-                    if ($setting->direction === 'out') {
-                        $amount *= -1;
-                    }
-
-                    return [
-                        'amount' => $amount,
-                        'description' => $setting->bank_name . ' SMS ile işlem',
-                        'payment_term_id' => $setting->payment_term_id,
-                        'payment_term_name' => null, // identifies by ID
-                        'user_id' => null, 
-                    ];
+            if (preg_match($pattern, $message, $matches)) {
+                $amount = (float)str_replace(',', '.', str_replace('.', '', $matches[4]));
+                if ($settings->direction === 'out') {
+                    $amount *= -1;
                 }
+
+                return [
+                    'amount' => $amount,
+                    'description' => $settings->bank_name . ' SMS ',
+                    'payment_term_id' => $settings->payment_term_id,
+                    'user_id' => null,
+                ];
+            } else {
+                return [
+                    'error' => 'The message format is invalid',
+                ];
             }
         }
-
         return null;
     }
 }
