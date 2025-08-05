@@ -14,7 +14,9 @@ class Transaction extends Model
 
     protected $fillable = ['owner', 'user_id', 'payment_term_id', 'payment_term_name', 'description', 'amount'];
 
-    protected $casts = [];
+    protected $casts = [
+        'amount' => 'float',
+    ];
 
     public function owner()
     {

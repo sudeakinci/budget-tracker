@@ -19,7 +19,7 @@
                 <label for="email" class="block text-gray-700 mb-1 font-medium">Email</label>
                 <div class="relative">
                     <span class="absolute left-3 top-2.5 text-gray-400"><i class="fa fa-envelope"></i></span>
-                    <input type="email" id="email" name="email" required autofocus class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition" placeholder="Email address">
+                    <input type="email" id="email" name="email" required autofocus class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition" placeholder="Email address" value="{{ old('email') }}">
                 </div>
             </div>
             <div>
