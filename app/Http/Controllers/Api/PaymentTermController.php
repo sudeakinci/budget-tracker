@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
 use App\Models\PaymentTerm;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use App\Http\Controllers\Controller;
 
 class PaymentTermController extends Controller
 {
@@ -32,6 +33,7 @@ class PaymentTermController extends Controller
     {
         try {
             $user = Auth::user();
+            
             $validated = $request->validate([
                 'name' => [
                     'required',

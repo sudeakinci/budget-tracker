@@ -1,10 +1,10 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\PaymentTermController;
-use App\Http\Controllers\TransactionController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\SmsIntegrationController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\PaymentTermController;
+use App\Http\Controllers\Api\TransactionController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\SmsIntegrationController;
 use Illuminate\Support\Facades\Route;
 
 

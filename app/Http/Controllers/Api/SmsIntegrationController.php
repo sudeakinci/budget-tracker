@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
 use App\Models\Transaction;
 use \App\Models\PaymentTerm;
@@ -8,6 +8,7 @@ use Auth;
 use \Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Models\SmsSettings;
+use App\Http\Controllers\Controller;
 
 class SmsIntegrationController extends Controller
 {
