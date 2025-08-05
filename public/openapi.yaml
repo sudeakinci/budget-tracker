@@ -4,7 +4,7 @@ info:
   description: API for managing users, payment terms, and transactions.
   version: 1.0.0
 servers:
-  - url: http://127.0.0.1:8081/api
+  - url: http://10.190.1.16:8081/api
 paths:
   /register:
     post:
@@ -151,12 +151,31 @@ paths:
             schema:
               $ref: '#/components/schemas/TransactionStore'
       responses:
+        responses:
         '201':
           description: Transaction created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Transaction'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  errors:
+                    type: object
+              examples:
+                missing_payment_term_name:
+                  value:
+                    message: The payment term name field is required when payment term id is not present.
+                    errors:
+                      payment_term_name:
+                        - The payment term name field is required when payment term id is not present.
   /transactions/{id}:
     get:
       summary: Get a specific transaction
@@ -397,6 +416,7 @@ components:
       type: object
       required:
         - amount
+        - payment_term_name
       properties:
         user_id:
           type: integer
