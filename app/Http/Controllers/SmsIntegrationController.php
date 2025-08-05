@@ -25,7 +25,7 @@ class SmsIntegrationController extends Controller
         }
         $parsed = $this->parseSms($message, $smsSetting);
 
-        if (!$parsed) {
+        if (!$parsed || isset($parsed['error'])) {
             return response()->json(['error' => 'The message format is invalid'], 422);
         }
 
@@ -57,26 +57,27 @@ class SmsIntegrationController extends Controller
     private function parseSms($message, SmsSettings $settings)
     {
 
-        if (stripos($message, $settings->keyword) !== false) {
-            // Ziraat formatına uygun şimdilik regex
-            $pattern = '/(\d{2}\.\d{2}\.\d{4}) tarihinde saat (\d{2}:\d{2})\'de (\d+) nolu hesabiniza .*?FAST ile ([\d.,]+)\s*TL (gönderilmiştir|çekilmiştir)/iu';
-
-            if (preg_match($pattern, $message, $matches)) {
-                $amount = (float)str_replace(',', '.', str_replace('.', '', $matches[4]));
-                if ($settings->direction === 'out') {
-                    $amount *= -1;
+        $bank_patterns = [
+            'ZIRAAT' => [
+                'pattern' => '/(\d{2}\.\d{2}\.\d{4}) (?:tarihinde )?saat (\d{2}:\d{2})\'de (\d+) nolu hesab(?:iniza|inizdan) .*?FAST ile .*? ([\d.,]+)\s*TL (gonderilmistir|aktarilmistir)/iu',
+                'handler' => function ($matches) use ($settings) {
+                    $amount = (float) str_replace(',', '.', str_replace('.', '', $matches[4]));
+                    if ($matches[5] === 'aktarilmistir') {
+                        $amount *= -1;
+                    }
+                    return [
+                        'amount' => $amount,
+                        'description' => $settings->bank_name . ' SMS',
+                        'payment_term_id' => $settings->payment_term_id,
+                        'user_id' => null,
+                    ];
                 }
+            ],
+        ];
 
-                return [
-                    'amount' => $amount,
-                    'description' => $settings->bank_name . ' SMS ',
-                    'payment_term_id' => $settings->payment_term_id,
-                    'user_id' => null,
-                ];
-            } else {
-                return [
-                    'error' => 'The message format is invalid',
-                ];
+        foreach ($bank_patterns as $bank_pattern) {
+            if (preg_match($bank_pattern['pattern'], $message, $matches)) {
+                return $bank_pattern['handler']($matches);
             }
         }
         return null;
