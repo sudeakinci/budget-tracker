@@ -37,10 +37,14 @@ class TransactionController extends Controller
 
             $transactions = $query->orderByDesc('created_at')->get();
             $result = $transactions->map(function ($transaction) {
+                $ownerUser = User::find($transaction->owner);
+
                 return [
                     'id' => $transaction->id,
                     'owner' => $transaction->owner,
+                    'owner_name' => optional($ownerUser)->name ?? 'Unknown',
                     'user_id' => $transaction->user_id,
+                    'user_name' => $transaction->user->name ?? null,
                     'amount' => $transaction->amount,
                     'description' => $transaction->description,
                     'payment_term' => $transaction->payment_term_name,
