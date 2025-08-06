@@ -80,19 +80,18 @@ class TransactionController extends Controller
             $owner = $user;
 
             if ($owner->balance < $validatedData['amount']) {
-                return redirect()->back()->withErrors(['message' => 'Yetersiz bakiye']);
+                return redirect()->back()->withErrors(['message' => 'Insufficient balance']);
             }
 
             $paymentTermId = $validatedData['payment_term_id'] ?? null;
             $paymentTermName = $validatedData['payment_term_name'] ?? null;
 
-            // Eğer payment_term_name boşsa, mevcut payment_term'in adını al
+            // if payment term is not provided, fetch it from the database
             if (!$paymentTermName) {
                 $paymentTerm = PaymentTerm::findOrFail($paymentTermId);
                 $paymentTermName = $paymentTerm->name;
             }
 
-            // Transaction oluştur
             $transaction = Transaction::create([
                 'owner' => $owner->id,
                 'user_id' => $validatedData['user_id'] ?? null,
@@ -104,14 +103,14 @@ class TransactionController extends Controller
 
             if (!$transaction) {
                 DB::rollBack();
-                return redirect()->back()->withErrors(['message' => 'İşlem oluşturulamadı']);
+                return redirect()->back()->withErrors(['message' => 'Transaction could not be created']);
             }
 
-            // Gönderen kullanıcının bakiyesini güncelle
+            // update owner's balance
             $owner->balance -= $validatedData['amount'];
             $owner->save();
 
-            // Eğer alıcı kullanıcı belirtilmişse, onun bakiyesini güncelle
+            // if a receiver user is specified, update their balance
             if (isset($validatedData['user_id'])) {
                 $receiver = User::find($validatedData['user_id']);
                 $receiver->balance += $validatedData['amount'];
@@ -119,10 +118,62 @@ class TransactionController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('transactions')->with('status', 'İşlem başarıyla gerçekleşti.');
+            return redirect()->route('transactions')->with('status', 'Transaction was successful.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->withErrors(['message' => 'İşlem sırasında bir hata oluştu: ' . $e->getMessage()]);
+            return redirect()->back()->withErrors(['message' => 'An error occurred: ' . $e->getMessage()]);
+        }
+    }
+
+    public function show($id)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        $transaction = Transaction::with(['owner', 'user'])
+            ->where('id', $id)
+            ->where(function ($query) use ($user) {
+                $query->where('owner', $user->id)
+                    ->orWhere('user_id', $user->id);
+            })
+            ->first();
+
+        if (!$transaction) {
+            return redirect()->back()->withErrors(['message' => 'Transaction not found']);
+        }
+
+        return view('transaction_show', ['transaction' => $transaction]);
+    }
+
+    public function destroy($id){
+        $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        try {
+            $transaction = Transaction::findOrFail($id);
+
+            if ($transaction->owner !== $user->id) {
+                return redirect()->back()->withErrors(['message' => 'You are not authorized to delete this transaction.']);
+            }
+
+            DB::beginTransaction();
+
+            // restore the balance
+            $user->balance += $transaction->amount;
+            $user->save();
+
+            // delete the transaction
+            $transaction->delete();
+
+            DB::commit();
+            return redirect()->route('transactions')->with('status', 'Transaction was successfully deleted.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors(['message' => 'An error occurred: ' . $e->getMessage()]);
         }
     }
 }
