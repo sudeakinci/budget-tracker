@@ -16,11 +16,41 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            overflow-y: scroll; /* Prevents body from scrolling */
         }
 
         .transition-all {
             transition: all 0.3s ease;
         }
+
+        .nav-link {
+            @apply text-gray-600 transition-all relative;
+            opacity: 1;
+        }
+
+        .nav-link:hover {
+            opacity: 0.7;
+        }
+
+        .nav-link::after {
+            content: '';
+            display: block;
+            position: absolute;
+            left: 0;
+            bottom: -2px;
+            width: 100%;
+            height: 2px;
+            background: #2563eb;
+            /* Tailwind blue-600 */
+            border-radius: 2px;
+            transform: scaleX(0);
+            transition: transform 0.3s cubic-bezier(.4, 0, .2, 1);
+        }
+
+        .nav-link.active {
+            font-weight: 600;
+        }
+
     </style>
 </head>
 
@@ -41,9 +71,11 @@
             <!-- Desktop Menu -->
             <div class="hidden md:flex items-center space-x-6">
                 <nav class="flex space-x-6">
-                    <a href="#" class="text-gray-600 hover:text-blue-600 transition-all">Dashboard</a>
-                    <a href="#" class="text-gray-600 hover:text-blue-600 transition-all">Transactions</a>
-                    <a href="#" class="text-gray-600 hover:text-blue-600 transition-all">My Account</a>
+                    <a href="{{ route('dashboard') }}"
+                        class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">Dashboard</a>
+                    <a href="{{ route('transactions') }}"
+                        class="nav-link {{ request()->routeIs('transactions') ? 'active' : '' }}">Transactions</a>
+                    <a href="#" class="nav-link">My Account</a>
                 </nav>
                 <div class="flex items-center space-x-2 ml-4">
                     @auth
