@@ -122,7 +122,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-grow container mx-auto px-4 py-8">
+    <main class="flex-grow container mx-auto px-4 py-4">
         @if(session('status'))
             <div class="mb-6 p-4 bg-green-100 text-green-800 rounded-lg border border-green-200 shadow-sm">
                 <div class="flex items-center">

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\AuthController;
+use \App\Http\Controllers\Web\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/doc', function () {
@@ -31,3 +32,11 @@ Route::get('/', function () {
     }
     return view('welcome');
 });
+
+Route::get('/transactions', [TransactionController::class, 'index'])
+    ->middleware('auth')
+    ->name('transactions');
+
+Route::post('/transactions', [TransactionController::class, 'store'])
+    ->middleware('auth')
+    ->name('transactions.store');
