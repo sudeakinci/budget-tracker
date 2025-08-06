@@ -65,7 +65,7 @@ class TransactionController extends Controller
         $user = Auth::user();
         if (!$user) {
             return response()->json(['message' => 'Unauthorized'], 401);
-        }   
+        }
 
         $validatedData = $request->validate([
             'user_id' => 'nullable|exists:users,id',
@@ -104,17 +104,20 @@ class TransactionController extends Controller
                     ]);
                 }
                 $paymentTermId = $paymentTerm->id;
-            } else {
+            } elseif ($paymentTermId) {
                 $paymentTerm = PaymentTerm::findOrFail($paymentTermId);
                 if ($paymentTerm->created_by !== null && $paymentTerm->created_by !== $owner->id) {
                     DB::rollBack();
                     return response()->json(['message' => 'Forbidden'], 403);
                 }
                 $paymentTermName = $paymentTerm->name;
+            } else {
+                DB::rollBack();
+                return response()->json(['message' => 'Payment term is required.'], 422);
             }
 
             $transaction = Transaction::create([
-                'owner' => $owner->id, 
+                'owner' => $owner->id,
                 'user_id' => $validatedData['user_id'] ?? null,
                 'amount' => $validatedData['amount'],
                 'description' => $validatedData['description'] ?? null,

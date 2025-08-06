@@ -123,24 +123,6 @@
 
     <!-- Main Content -->
     <main class="flex-grow container mx-auto px-4 py-4">
-        @if(session('status'))
-            <div class="mb-6 p-4 bg-green-100 text-green-800 rounded-lg border border-green-200 shadow-sm">
-                <div class="flex items-center">
-                    <i class="fas fa-check-circle mr-3 text-green-500"></i>
-                    <span>{{ session('status') }}</span>
-                </div>
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="mb-6 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 shadow-sm">
-                <div class="flex items-center">
-                    <i class="fas fa-exclamation-circle mr-3 text-red-500"></i>
-                    <span>{{ session('error') }}</span>
-                </div>
-            </div>
-        @endif
-
         {{ $slot }}
     </main>
 
