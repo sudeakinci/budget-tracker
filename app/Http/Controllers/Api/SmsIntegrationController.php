@@ -60,10 +60,10 @@ class SmsIntegrationController extends Controller
 
         $bank_patterns = [
             'ZIRAAT' => [
-                'pattern' => '/(\d{2}\.\d{2}\.\d{4}) (?:tarihinde )?saat (\d{2}:\d{2})\'de (\d+) nolu hesab(?:iniza|inizdan) .*?FAST ile .*? ([\d.,]+)\s*TL (gonderilmistir|aktarilmistir)/iu',
+                'pattern' => '/(\d{2}\.\d{2}\.\d{4})(?: tarihinde)? saat (\d{2}:\d{2})\'de (\d+) nolu hesab(?:iniza|inizdan).*?FAST ile.*?([\d.,]+)\s*TL (gonderilmistir|aktarilmistir)/iu',
                 'handler' => function ($matches) use ($settings) {
                     $amount = (float) str_replace(',', '.', str_replace('.', '', $matches[4]));
-                    if ($matches[5] === 'aktarilmistir') {
+                    if (mb_strtolower($matches[5]) === 'aktarilmistir') {
                         $amount *= -1;
                     }
                     return [
