@@ -32,24 +32,58 @@
                 <i class="fas fa-exchange-alt text-blue-600 text-xl"></i>
                 <span class="font-bold text-xl text-gray-800">{{ config('app.name') }}</span>
             </div>
-            <nav class="hidden md:flex space-x-6">
-                <a href="#" class="text-gray-600 hover:text-blue-600 transition-all">Ana Sayfa</a>
-                <a href="#" class="text-gray-600 hover:text-blue-600 transition-all">İşlemler</a>
-                <a href="#" class="text-gray-600 hover:text-blue-600 transition-all">Hesabım</a>
-                <a href="#" class="text-gray-600 hover:text-blue-600 transition-all">Yardım</a>
+            <!-- Hamburger Button (Mobile) -->
+            <div class="md:hidden">
+                <button id="mobile-menu-button" class="text-gray-600 hover:text-blue-600 focus:outline-none">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+            </div>
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex items-center space-x-6">
+                <nav class="flex space-x-6">
+                    <a href="#" class="text-gray-600 hover:text-blue-600 transition-all">Dashboard</a>
+                    <a href="#" class="text-gray-600 hover:text-blue-600 transition-all">Transactions</a>
+                    <a href="#" class="text-gray-600 hover:text-blue-600 transition-all">My Account</a>
+                </nav>
+                <div class="flex items-center space-x-2 ml-4">
+                    @auth
+                        <form id="logout-form" action="/logout" method="POST">
+                            @csrf
+                            <button type="button" onclick="confirmLogout()"
+                                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center">
+                                <i class="fa fa-sign-out-alt ml-1"></i>
+                            </button>
+                        </form>
+                    @else
+                        <a href="/login" class="text-blue-600 hover:text-blue-800 transition-all">Giriş</a>
+                        <a href="/register"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all">Kayıt
+                            Ol</a>
+                    @endauth
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="md:hidden hidden px-4 pb-4">
+            <nav class="flex flex-col space-y-2 mb-2">
+                <a href="#" class="text-gray-600 hover:text-blue-600 transition-all">Dashboard</a>
+                <a href="#" class="text-gray-600 hover:text-blue-600 transition-all">Transactions</a>
+                <a href="#" class="text-gray-600 hover:text-blue-600 transition-all">My Account</a>
             </nav>
-            <div class="flex items-center space-x-2">
+            <div class="flex flex-col space-y-2">
                 @auth
-                    <form id="logout-form" action="/logout" method="POST">
+                    <form id="logout-form-mobile" action="/logout" method="POST">
                         @csrf
-                        <button type="button" onclick="confirmLogout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
-                            <i class="fa fa-sign-out-alt mr-2"></i>Logout
+                        <button type="button" onclick="confirmLogoutMobile()"
+                            class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center justify-center">
+                            <i class="fa fa-sign-out-alt mr-2"></i>
                         </button>
                     </form>
                 @else
-                    <a href="/login" class="text-blue-600 hover:text-blue-800 transition-all">Giriş</a>
+                    <a href="/login" class="text-blue-600 hover:text-blue-800 transition-all text-center">Giriş</a>
                     <a href="/register"
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all">Kayıt Ol</a>
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all text-center">Kayıt
+                        Ol</a>
                 @endauth
             </div>
         </div>
@@ -78,32 +112,6 @@
         {{ $slot }}
     </main>
 
-    <!-- Footer -->
-    <!-- <footer class="bg-gray-800 text-gray-300 py-6">
-        <div class="container mx-auto px-4">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="mb-4 md:mb-0">
-                    <div class="flex items-center space-x-2">
-                        <i class="fas fa-exchange-alt text-blue-400"></i>
-                        <span class="font-semibold">Para Transfer</span>
-                    </div>
-                    <p class="text-xs text-gray-400 mt-1">Kolay, hızlı ve güvenli para transferi</p>
-                </div>
-
-                <div class="flex space-x-6 text-sm">
-                    <a href="#" class="hover:text-white transition-all">Gizlilik</a>
-                    <a href="#" class="hover:text-white transition-all">Şartlar</a>
-                    <a href="#" class="hover:text-white transition-all">İletişim</a>
-                </div>
-            </div>
-
-            <div class="border-t border-gray-700 mt-4 pt-4 text-xs text-center text-gray-400">
-                &copy; {{ date('Y') }} Para Transfer. Tüm hakları saklıdır.
-            </div>
-        </div>
-    </footer>
-</body> -->
-
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
@@ -123,6 +131,31 @@
                 }
             });
         }
+        function confirmLogoutMobile() {
+            Swal.fire({
+                title: 'Are you sure you want to log out?',
+                text: "Your session will be terminated.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, log out',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('logout-form-mobile').submit();
+                }
+            });
+        }
+        // hmbrgr menu toggle
+        document.addEventListener('DOMContentLoaded', function () {
+            const btn = document.getElementById('mobile-menu-button');
+            const menu = document.getElementById('mobile-menu');
+            btn.addEventListener('click', function () {
+                menu.classList.toggle('hidden');
+            });
+        });
     </script>
+</body>
 
 </html>
