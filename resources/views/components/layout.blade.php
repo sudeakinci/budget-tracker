@@ -75,7 +75,7 @@
                         class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">Dashboard</a>
                     <a href="{{ route('transactions') }}"
                         class="nav-link {{ request()->routeIs('transactions') ? 'active' : '' }}">Transactions</a>
-                    <a href="#" class="nav-link">My Account</a>
+                    <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">My Account</a>
                 </nav>
                 <div class="flex items-center space-x-2 ml-4">
                     @auth
@@ -98,9 +98,11 @@
         <!-- Mobile Menu -->
         <div id="mobile-menu" class="md:hidden hidden px-4 pb-4">
             <nav class="flex flex-col space-y-2 mb-2">
-                <a href="#" class="text-gray-600 hover:text-blue-600 transition-all">Dashboard</a>
-                <a href="#" class="text-gray-600 hover:text-blue-600 transition-all">Transactions</a>
-                <a href="#" class="text-gray-600 hover:text-blue-600 transition-all">My Account</a>
+                    <a href="{{ route('dashboard') }}"
+                        class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">Dashboard</a>
+                    <a href="{{ route('transactions') }}"
+                        class="nav-link {{ request()->routeIs('transactions') ? 'active' : '' }}">Transactions</a>
+                    <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">My Account</a>
             </nav>
             <div class="flex flex-col space-y-2">
                 @auth

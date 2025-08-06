@@ -3,6 +3,7 @@
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\AuthController;
 use \App\Http\Controllers\Web\TransactionController;
+use App\Http\Controllers\Web\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/doc', function () {
@@ -42,3 +43,7 @@ Route::post('/transactions', [TransactionController::class, 'store'])
     ->name('transactions.store');
 
 Route::delete('/transactions/{id}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
+
+Route::get('/profile/{id?}', [ProfileController::class, 'show'])
+    ->middleware('auth')
+    ->name('profile');
