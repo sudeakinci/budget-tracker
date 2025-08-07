@@ -51,3 +51,7 @@ Route::get('/profile/{id?}', [ProfileController::class, 'show'])
 Route::post('/profile/{id?}', [ProfileController::class, 'update'])
     ->middleware('auth')
     ->name('profile');
+
+Route::delete('/profile/{id}', [ProfileController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('profile.delete');
