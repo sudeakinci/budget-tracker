@@ -14,46 +14,37 @@ Route::get("/", function () {
     return view('welcome');
 });
 
-//Authentication routes
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
-Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
-
-// Dashboard route (protected by auth middleware)
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware('auth')
-    ->name('dashboard');
-
-// Redirect root to dashboard if authenticated
 Route::get('/', function () {
-    if (Auth::check()) {
-        return redirect('/dashboard');
-    }
-    return view('welcome');
+    return Auth::check() ? redirect('/dashboard') : view('welcome');
 });
 
-Route::get('/transactions', [TransactionController::class, 'index'])
-    ->middleware('auth')
-    ->name('transactions');
+//authentication routes
+Route::controller(AuthController::class)->group(function () {
+    Route::get('/login', 'showLoginForm')->name('login');
+    Route::post('/login', 'login');
+    Route::get('/register', 'showRegistrationForm')->name('register');
+    Route::post('/register', 'register');
+    Route::post('/logout', 'logout')->name('logout')->middleware('auth');
 
-Route::post('/transactions', [TransactionController::class, 'store'])
-    ->middleware('auth')
-    ->name('transactions.store');
+    // unlock account routes
+    Route::get('/unlock-account', 'showUnlockForm')->name('unlock.account.request');
+    Route::post('/unlock-account', 'sendUnlockCode')->name('unlock.account.send');
+    Route::post('/unlock-account/verify', 'verifyUnlockCode')->name('unlock.account.verify');
 
-Route::delete('/transactions/{id}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
+});
 
-Route::get('/profile/{id?}', [ProfileController::class, 'show'])
-    ->middleware('auth')
-    ->name('profile');
+// protected routes
+Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-Route::post('/profile/{id?}', [ProfileController::class, 'update'])
-    ->middleware('auth')
-    ->name('profile');
+    // transaction routes
+    Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions');
+    Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
+    Route::put('/transactions/{id}', [TransactionController::class, 'update'])->name('transactions.update');
+    Route::delete('/transactions/{id}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
 
-Route::delete('/profile/{id}', [ProfileController::class, 'destroy'])
-    ->middleware('auth')
-    ->name('profile.delete');
-
-Route::put('/transactions/{id}', [App\Http\Controllers\Web\TransactionController::class, 'update'])->name('transactions.update');
+    // profile routes
+    Route::get('/profile/{id?}', [ProfileController::class, 'show'])->name('profile');
+    Route::post('/profile/{id?}', [ProfileController::class, 'update'])->name('profile');
+    Route::delete('/profile/{id}', [ProfileController::class, 'destroy'])->name('profile.delete');
+});
