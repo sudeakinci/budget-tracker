@@ -31,6 +31,7 @@ Route::controller(AuthController::class)->group(function () {
     Route::post('/unlock-account', 'sendUnlockCode')->name('unlock.account.send');
     Route::post('/unlock-account/verify', 'verifyUnlockCode')->name('unlock.account.verify');
 
+    Route::get('/verify-email', 'verifyEmail')->name('verify.email');
 });
 
 // protected routes

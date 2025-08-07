@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\UnlockCodeMail;
+use App\Mail\EmailVerificationMail;
+use Illuminate\Support\Str;
 use Auth;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -34,19 +36,27 @@ class AuthController extends Controller
 
             ]);
 
+            $token = Str::random(32);
+
+
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'balance' => $validated['balance'] ?? 0,
+                'email_verified_at' => null,
+                'email_verification_token' => $token,
             ]);
+
+            Mail::to($user->email)->send(new EmailVerificationMail($user));
 
             Auth::login($user); // automatically log in the user after registration, starting their session
 
-            return redirect('/dashboard')->with('success', 'Account created successfully');
+            return redirect('/login')->with('success', 'Account created successfully. Please verify your email.');
         } catch (ValidationException $e) {
-            return redirect()->back()->with('error', 'Registration failed');
+            return redirect()->back()->withErrors(['message' => 'Registration failed: ' . $e->getMessage()])->withInput();
         }
+
     }
     public function login(Request $request)
     {
@@ -57,7 +67,13 @@ class AuthController extends Controller
 
         $user = User::withTrashed()->where('email', $credentials['email'])->first();
 
-        if (Auth::attempt($credentials)) {
+        if ($user && !$user->email_verified_at) {
+            return back()->withErrors(['email' => 'Please verify your email before logging in.']);
+        }
+
+        $remember = $request->has('remember');
+
+        if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
             return redirect()->intended('/dashboard');
         }
@@ -139,5 +155,20 @@ class AuthController extends Controller
             return redirect()->route('unlock.account.request', ['email' => $request->email])
                 ->with('error', 'An error occurred, please try again.');
         }
+    }
+
+    public function verifyEmail(Request $request)
+    {
+        $user = User::where('email_verification_token', $request->token)->first();
+
+        if (!$user) {
+            return redirect('/login')->with('error', 'Invalid verification link.');
+        }
+
+        $user->email_verified_at = now();
+        $user->email_verification_token = null;
+        $user->save();
+
+        return redirect('/login')->with('success', 'Email verified. You can now log in.');
     }
 }
