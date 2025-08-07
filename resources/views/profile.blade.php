@@ -96,7 +96,7 @@
             <h3 class="text-lg font-medium text-red-800 mb-2">Danger Zone</h3>
             <p class="text-sm text-gray-600 mb-4">The actions below are destructive and cannot be reversed.</p>
 
-            <form action="{{ route('profile.delete', ['id' => $user->id]) }}" method="POST" class="flex justify-end">
+            <form action="{{ route('profile.delete', ['id' => $user->id]) }}" method="POST" class="flex justify-end" id="deleteAccountForm">
                 @csrf
                 @method('DELETE')
                 <button type="button" id="deleteAccountBtn"
