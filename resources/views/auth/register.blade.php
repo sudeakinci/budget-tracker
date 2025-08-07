@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 
+<x-error-toast :errors="$errors" />
+
 <body class="bg-gradient-to-br from-blue-100 via-white to-blue-200 min-h-screen flex items-center justify-center">
 
     <style>
@@ -29,6 +31,10 @@
             <h2 class="text-3xl font-extrabold text-gray-800 mb-2">Register</h2>
             <p class="text-gray-500 text-sm">Welcome! Please create an account.</p>
         </div>
+        
+        <x-success-toast />
+        <x-error-toast :errors="$errors" />
+
         <form method="POST" action="/register" class="space-y-5">
             @csrf
             <div>

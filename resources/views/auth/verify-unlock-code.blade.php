@@ -16,21 +16,7 @@
             <p class="text-gray-500 text-sm text-center">Please enter the 6-digit code sent to your email address</p>
         </div>
 
-        @if(session('error'))
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                {{ session('error') }}
-            </div>
-        @endif
-
-        @if ($errors->any())
-            <div class="bg-red-50 text-red-700 p-4 rounded-lg mb-6 border border-red-200">
-                <ul class="list-disc pl-5">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+        <x-error-toast :errors="$errors" />
 
         @php
             $expiresAt = session('unlock_code_expires_at', time() + 180);
