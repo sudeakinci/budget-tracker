@@ -147,7 +147,53 @@ class TransactionController extends Controller
         return view('transaction_show', ['transaction' => $transaction]);
     }
 
-    public function destroy($id){
+    public function update(Request $request, Transaction $id)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        //check if the user is authorized to update this transaction
+        if ($id->owner != $user->id) {
+            return redirect()->back()->withErrors(['message' => 'You are not authorized to update this transaction.']);
+        }
+
+        $validatedData = $request->validate([
+            'description' => 'nullable|string|max:255',
+            'payment_type' => 'required|in:select,custom',
+            'payment_term_id' => 'required_if:payment_type,select|nullable|exists:payment_terms,id',
+            'payment_term_name' => 'required_if:payment_type,custom|nullable|string|max:255',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $paymentTermId = $validatedData['payment_type'] === 'select' ? $validatedData['payment_term_id'] : null;
+            $paymentTermName = $validatedData['payment_type'] === 'custom' ? $validatedData['payment_term_name'] : null;
+
+            // if payment term is not provided, fetch it from the database
+            if (!$paymentTermName && $paymentTermId) {
+                $paymentTerm = PaymentTerm::findOrFail($paymentTermId);
+                $paymentTermName = $paymentTerm->name;
+            }
+
+            // update the transaction
+            $id->description = $validatedData['description'];
+            $id->payment_term_id = $paymentTermId;
+            $id->payment_term_name = $paymentTermName;
+            $id->save();
+
+            DB::commit();
+            return redirect()->back()->with('status', 'Transaction was successfully updated.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors(['message' => 'An error occurred: ' . $e->getMessage()]);
+        }
+    }
+
+    public function destroy($id)
+    {
         $user = Auth::user();
         if (!$user) {
             return redirect()->route('login');

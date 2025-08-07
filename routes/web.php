@@ -55,3 +55,5 @@ Route::post('/profile/{id?}', [ProfileController::class, 'update'])
 Route::delete('/profile/{id}', [ProfileController::class, 'destroy'])
     ->middleware('auth')
     ->name('profile.delete');
+
+Route::put('/transactions/{id}', [App\Http\Controllers\Web\TransactionController::class, 'update'])->name('transactions.update');
