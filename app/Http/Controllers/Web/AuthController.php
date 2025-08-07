@@ -26,11 +26,16 @@ class AuthController extends Controller
                 'name' => 'required|string',
                 'email' => 'required|email|unique:users',
                 'password' => 'required|string|min:6|confirmed',
+                'balance' => 'nullable|numeric|min:0',
+
             ]);
 
-            $validated['password'] = Hash::make($validated['password']);
-
-            $user = User::create($validated);
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'balance' => $validated['balance'] ?? 0,
+            ]);
 
             Auth::login($user); // automatically log in the user after registration, starting their session
 

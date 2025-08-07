@@ -10,6 +10,20 @@
 </head>
 
 <body class="bg-gradient-to-br from-blue-100 via-white to-blue-200 min-h-screen flex items-center justify-center">
+
+    <style>
+        /* remove spinner buttons from number inputs */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+
     <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-10 border border-blue-100">
         <div class="flex flex-col items-center mb-8">
             <h2 class="text-3xl font-extrabold text-gray-800 mb-2">Register</h2>
@@ -41,7 +55,7 @@
                     <span class="absolute left-3 top-2.5 text-gray-400"><i class="fa fa-lock"></i></span>
                     <input type="password" id="password" name="password" required
                         class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-                        placeholder="Password" >
+                        placeholder="Password">
                 </div>
             </div>
             <div>
@@ -51,6 +65,17 @@
                     <input type="password" id="password_confirmation" name="password_confirmation" required
                         class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                         placeholder="Confirm Password">
+                </div>
+            </div>
+
+            <div>
+                <label for="balance" class="block text-gray-700 mb-1 font-medium">Initial Balance (₺)</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-2.5 text-gray-400"><i class="fa fa-wallet"></i></span>
+                    <input type="number" id="balance" name="balance" step="0.01" min="0"
+                        class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                        placeholder="0.00">
+                    <p class="mt-1 text-xs text-gray-500">Set your starting account balance (optional)</p>
                 </div>
             </div>
 
