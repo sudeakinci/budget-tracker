@@ -47,3 +47,7 @@ Route::delete('/transactions/{id}', [TransactionController::class, 'destroy'])->
 Route::get('/profile/{id?}', [ProfileController::class, 'show'])
     ->middleware('auth')
     ->name('profile');
+
+Route::post('/profile/{id?}', [ProfileController::class, 'update'])
+    ->middleware('auth')
+    ->name('profile');
