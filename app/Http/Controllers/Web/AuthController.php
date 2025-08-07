@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\UnlockCodeMail;
 use Auth;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -11,17 +13,19 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function showLoginForm(){
+    public function showLoginForm()
+    {
         return view("auth.login");
     }
 
-    public function showRegistrationForm(){
+    public function showRegistrationForm()
+    {
         return view("auth.register");
     }
 
     public function register(Request $request)
     {
-        try{
+        try {
             $validated = $request->validate([
                 'name' => 'required|string',
                 'email' => 'required|email|unique:users',
@@ -51,9 +55,15 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        if(Auth::attempt($credentials)) {
+        $user = User::withTrashed()->where('email', $credentials['email'])->first();
+
+        if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
             return redirect()->intended('/dashboard');
+        }
+
+        if ($user && $user->trashed()) {
+            return $this->sendUnlockCode($request); // send unlock code if the user is soft-deleted
         }
 
         return back()->withErrors([
@@ -61,12 +71,73 @@ class AuthController extends Controller
         ])->withInput();
     }
 
-    public function logout(Request $request){
+    public function logout(Request $request)
+    {
         Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return redirect('/login');
+    }
+
+
+    // unlock account functions
+    public function showUnlockForm(Request $request)
+    {
+        return view('auth.verify-unlock-code', ['email' => $request->email]);
+    }
+
+    public function sendUnlockCode(Request $request)
+    {
+        $user = User::withTrashed()->where('email', $request->email)->firstOrFail();
+
+        $code = rand(100000, 999999); // 6-digit code
+
+        $expiresAt = now()->addMinutes(3);
+
+        $user->code = $code;
+        $user->expires_at = $expiresAt;
+        $user->save();
+
+        Mail::to($user->email)->send(new UnlockCodeMail($code));
+
+        session(['unlock_code_expires_at' => $expiresAt->timestamp]);
+
+
+        return view('auth.verify-unlock-code', ['email' => $user->email])->with('success', 'New code sent to your email');
+    }
+
+    public function verifyUnlockCode(Request $request)
+    {
+        try {
+            $user = User::withTrashed()->where('email', $request->email)->first();
+
+            if (!$user) {
+                return redirect()->route('unlock.account.request', ['email' => $request->email])
+                    ->with('error', 'Kullanıcı bulunamadı.');
+            }
+
+            $valid = $user->code == $request->code && $user->expires_at > now();
+
+            if (!$valid) {
+                return redirect()->route('unlock.account.request', ['email' => $request->email])
+                    ->with('error', 'Invalid or expired code.');
+            }
+
+            $user->restore();
+            Auth::login($user);
+
+            // Kod ve süresini sıfırla
+            $user->code = null;
+            $user->expires_at = null;
+            $user->save();
+
+
+            return redirect()->route('dashboard');
+        } catch (\Exception $e) {
+            return redirect()->route('unlock.account.request', ['email' => $request->email])
+                ->with('error', 'An error occurred, please try again.');
+        }
     }
 }
