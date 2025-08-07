@@ -73,6 +73,7 @@ class TransactionController extends Controller
             'description' => 'nullable|string',
             'payment_term_id' => 'nullable|exists:payment_terms,id',
             'payment_term_name' => 'required_without:payment_term_id|string|max:255',
+            'is_sms' => 'nullable|boolean',
         ]);
 
         try {
@@ -123,6 +124,7 @@ class TransactionController extends Controller
                 'description' => $validatedData['description'] ?? null,
                 'payment_term_id' => $paymentTermId,
                 'payment_term_name' => $paymentTermName,
+                'is_sms' => false,
             ]);
 
             if (!$transaction) {

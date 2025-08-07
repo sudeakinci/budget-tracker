@@ -155,7 +155,7 @@ class TransactionController extends Controller
         }
 
         //check if the user is authorized to update this transaction
-        if ($id->owner != $user->id) {
+        if ($id->is_sms || $id->owner != $user->id) {
             return redirect()->back()->withErrors(['message' => 'You are not authorized to update this transaction.']);
         }
 

@@ -41,6 +41,7 @@ class SmsIntegrationController extends Controller
                 'description' => $parsed['description'],
                 'payment_term_id' => $parsed['payment_term_id'],
                 'payment_term_name' => $paymentTerm->name,
+                'is_sms' => true,
             ]);
 
             $user->balance += $parsed['amount'];
