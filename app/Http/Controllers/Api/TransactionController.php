@@ -69,7 +69,7 @@ class TransactionController extends Controller
 
         $validatedData = $request->validate([
             'user_id' => 'nullable|exists:users,id',
-            'amount' => 'required|numeric|min:0.01',
+            'amount' => 'required|numeric|not_in:0',
             'description' => 'nullable|string',
             'payment_term_id' => 'nullable|exists:payment_terms,id',
             'payment_term_name' => 'required_without:payment_term_id|string|max:255',

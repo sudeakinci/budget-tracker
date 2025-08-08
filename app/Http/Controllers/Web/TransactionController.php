@@ -64,12 +64,11 @@ class TransactionController extends Controller
         }
 
         $validatedData = $request->validate([
-            'amount' => 'required|numeric|min:0.01',
+            'amount' => 'required|numeric|not_in:0',
             'description' => 'nullable|string|max:255',
             'receiver_type' => 'required|in:select,custom',
             'payment_type' => 'required|in:select,custom',
-            'user_id' => 'required_if:receiver_type,select|nullable|exists:users,id',
-            'custom_user' => 'required_if:receiver_type,custom|nullable|string|max:255',
+            'user_id' => 'nullable|exists:users,id',
             'payment_term_id' => 'required_if:payment_type,select|nullable|exists:payment_terms,id',
             'payment_term_name' => 'required_if:payment_type,custom|nullable|string|max:255',
         ]);
