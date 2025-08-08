@@ -4,6 +4,7 @@ use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\AuthController;
 use \App\Http\Controllers\Web\TransactionController;
 use App\Http\Controllers\Web\ProfileController;
+use App\Http\Controllers\Web\PaymentTermController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/doc', function () {
@@ -48,4 +49,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/{id?}', [ProfileController::class, 'show'])->name('profile');
     Route::post('/profile/{id?}', [ProfileController::class, 'update'])->name('profile');
     Route::delete('/profile/{id}', [ProfileController::class, 'destroy'])->name('profile.delete');
+
+    // payment terms routes
+    Route::put('/payment-terms/{paymentTerm}', [PaymentTermController::class, 'update'])->name('payment-terms.update');
+    Route::delete('/payment-terms/{paymentTerm}', [PaymentTermController::class, 'destroy'])->name('payment-terms.destroy');
+
 });

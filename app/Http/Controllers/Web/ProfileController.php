@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use App\Models\PaymentTerm;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
@@ -11,14 +12,15 @@ use Illuminate\Support\Facades\Hash;
 class ProfileController extends Controller
 {
     public function show($id = null)
-{
-    $user = Auth::user();
-    if (!$user || ($id && $user->id != $id)) {
-        return redirect()->route('login');
-    }
+    {
+        $user = Auth::user();
+        $paymentTerms = PaymentTerm::where('created_by', $user->id)->get();
 
-    return view('profile', compact('user'));
-}
+        return view('profile', [
+            'user' => $user,
+            'paymentTerms' => $paymentTerms, 
+        ]);
+    }
 
     public function update(Request $request, $id)
     {
@@ -62,7 +64,8 @@ class ProfileController extends Controller
         }
     }
 
-    public function destroy($id){
+    public function destroy($id)
+    {
         $user = Auth::user();
         if (!$user || $user->id != $id) {
             return redirect()->route('login');
