@@ -113,6 +113,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaymentTerm'
+    put:
+      summary: Update a payment term
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentTermStore'
+      responses:
+        '200':
+          description: Payment term updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentTerm'
     delete:
       summary: Delete a payment term
       security:
