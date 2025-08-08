@@ -34,7 +34,7 @@ class TransactionController extends Controller
                 'transactions.*',
                 DB::raw(
                     'CASE 
-                            WHEN transactions.owner = ' . $user->id . ' THEN transactions.amount * -1
+                            WHEN transactions.owner = ' . $user->id . ' AND transactions.is_sms = false THEN transactions.amount * -1
                             ELSE transactions.amount
                             END as amount'
                 )
@@ -204,6 +204,10 @@ class TransactionController extends Controller
 
             if ($transaction->owner !== $user->id) {
                 return redirect()->back()->withErrors(['message' => 'You are not authorized to delete this transaction.']);
+            }
+
+            if ($transaction->is_sms) {
+                return redirect()->back()->withErrors(['message' => 'Transactions created via SMS cannot be deleted.']);
             }
 
             DB::beginTransaction();
