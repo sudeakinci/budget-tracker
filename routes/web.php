@@ -5,6 +5,7 @@ use App\Http\Controllers\Web\AuthController;
 use \App\Http\Controllers\Web\TransactionController;
 use App\Http\Controllers\Web\ProfileController;
 use App\Http\Controllers\Web\PaymentTermController;
+use \App\Http\Controllers\Web\LedgerController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/doc', function () {
@@ -44,6 +45,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
     Route::put('/transactions/{id}', [TransactionController::class, 'update'])->name('transactions.update');
     Route::delete('/transactions/{id}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
+
+    // ledger routes
+    Route::get('/ledger', [LedgerController::class, 'index'])->name('ledger');
+    Route::post('/ledger', [LedgerController::class, 'store'])->name('ledger.store');
 
     // profile routes
     Route::get('/profile/{id?}', [ProfileController::class, 'show'])->name('profile');

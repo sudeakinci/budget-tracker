@@ -75,6 +75,8 @@
                         class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">Dashboard</a>
                     <a href="{{ route('transactions') }}"
                         class="nav-link {{ request()->routeIs('transactions') ? 'active' : '' }}">Transactions</a>
+                    <a href="{{ route('ledger') }}"
+                        class="nav-link {{ request()->routeIs('ledger') ? 'active' : '' }}">Ledger</a>
                     <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">My Account</a>
                 </nav>
                 <div class="flex items-center space-x-2 ml-4">
@@ -102,6 +104,8 @@
                         class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">Dashboard</a>
                     <a href="{{ route('transactions') }}"
                         class="nav-link {{ request()->routeIs('transactions') ? 'active' : '' }}">Transactions</a>
+                    <a href="{{ route('ledger') }}"
+                        class="nav-link {{ request()->routeIs('ledger') ? 'active' : '' }}">Ledger</a>
                     <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">My Account</a>
             </nav>
             <div class="flex flex-col space-y-2">

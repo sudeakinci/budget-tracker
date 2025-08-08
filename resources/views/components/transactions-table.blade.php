@@ -5,7 +5,7 @@
     'rowCount' => 20,
 ])
 
-<div class="overflow-x-auto">
+<div class="overflow-x-visible">
     <table class="min-w-full bg-white rounded-lg shadow text-sm">
         <thead>
             <tr class="bg-blue-50 border-b border-blue-200">
@@ -55,7 +55,7 @@
                                 </svg>
                             </button>
                             <div id="dropdown-{{ $transaction->id }}"
-                                class="dropdown-menu hidden absolute right-0 mt-2 w-32 bg-white rounded-md shadow-lg z-40">
+                                class="dropdown-menu hidden absolute right-0 mt-2 w-32 bg-white rounded-md shadow-lg z-40 overflow-visible max-h-48 overflow-y-auto">
                                 <div class="py-1">
                                     <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onclick="event.preventDefault(); showTransactionDetails({{ $transaction->id }}, 
                                 '{{ $transaction->created_at->format('d.m.Y H:i') }}', 
