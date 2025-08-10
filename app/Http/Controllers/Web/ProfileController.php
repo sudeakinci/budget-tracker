@@ -18,7 +18,7 @@ class ProfileController extends Controller
 
         return view('profile', [
             'user' => $user,
-            'paymentTerms' => $paymentTerms, 
+            'paymentTerms' => $paymentTerms,
         ]);
     }
 
@@ -80,5 +80,18 @@ class ProfileController extends Controller
                 ->withErrors(['message' => 'An error occurred while deleting the account.'])
                 ->withInput();
         }
+    }
+
+    public function updateBalance(Request $request, $id)
+    {
+        $request->validate([
+            'balance' => 'required|numeric|min:0',
+        ]);
+
+        $user = Auth::user();
+        $user->balance = $request->balance;
+        $user->save();
+
+        return redirect()->route('profile', ['id' => $user->id])->with('success', 'Balance updated successfully.');
     }
 }

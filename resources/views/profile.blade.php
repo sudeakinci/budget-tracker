@@ -4,6 +4,20 @@
 
     {{-- Toast Error --}}
     <x-error-toast :errors="$errors" />
+
+    <style>
+        /* remove spinner buttons from number inputs */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+
     <div class="max-w-4xl mx-auto mt-4 bg-white rounded-xl shadow-lg p-8 border border-blue-100">
         <div class="flex flex-col md:flex-row items-center md:space-x-6 mb-8">
             <div class="flex-shrink-0 mb-4 md:mb-0">
@@ -17,7 +31,35 @@
                 <p class="text-gray-500">{{ $user->email }}</p>
                 <span class="inline-block mt-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold">
                     Balance: {{ number_format($user->balance, 2) }} ₺
+                    <button type="button" id="editBalanceBtn" class="ml-2 text-blue-500 hover:text-blue-700">
+                        <i class="fa fa-edit"></i>
+                    </button>
                 </span>
+            </div>
+        </div>
+
+        <!-- Balance Edit Modal -->
+        <div id="balanceEditModal"
+            class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center h-full w-full hidden z-50">
+            <div class="bg-white p-6 rounded-lg shadow-lg w-80">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Edit Balance</h3>
+                <form action="{{ route('profile.balance.update', ['id' => $user->id]) }}" method="POST"
+                    id="balanceEditForm">
+                    @csrf
+                    <div class="mb-4">
+                        <label for="new_balance" class="block text-sm font-medium text-gray-700 mb-1">New
+                            Balance</label>
+                        <input type="number" name="balance" id="new_balance" step="0.01" min="0"
+                            value="{{ $user->balance }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" id="closeBalanceModal"
+                            class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800">Cancel</button>
+                        <button type="submit"
+                            class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white">Save</button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -83,14 +125,13 @@
                                 <div class="flex space-x-2">
                                     <button onclick="editPaymentTerm({{ $term->id }}, '{{ $term->name }}')"
                                         class="text-gray-500 hover:text-gray-700 p-1.5 rounded transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                         </svg>
                                     </button>
-                                    <form action="{{ route('payment-terms.destroy', $term->id) }}" method="POST"
-                                        class="inline" 
+                                    <form action="{{ route('payment-terms.destroy', $term->id) }}" method="POST" class="inline"
                                         id="deletePaymentTermForm-{{ $term->id }}">
                                         @csrf
                                         @method('DELETE')
@@ -117,7 +158,7 @@
         </div>
 
         <!-- edit Payment Term Modal -->
-         <x-edit-payment-term-modal />
+        <x-edit-payment-term-modal />
 
         <!-- Danger Zone Section -->
         <div class="mt-12 p-5 border border-red-200 rounded-lg bg-red-50">
@@ -162,6 +203,19 @@
                 document.getElementById('deleteAccountForm').submit();
             }
         });
+    });
+
+    document.getElementById('editBalanceBtn').addEventListener('click', function () {
+        document.getElementById('balanceEditModal').classList.remove('hidden');
+    });
+    document.getElementById('closeBalanceModal').addEventListener('click', function () {
+        document.getElementById('balanceEditModal').classList.add('hidden');
+    });
+    window.addEventListener('click', function (event) {
+        const modal = document.getElementById('balanceEditModal');
+        if (event.target === modal) {
+            modal.classList.add('hidden');
+        }
     });
 
 </script>

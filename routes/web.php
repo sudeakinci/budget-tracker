@@ -54,6 +54,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/{id?}', [ProfileController::class, 'show'])->name('profile');
     Route::post('/profile/{id?}', [ProfileController::class, 'update'])->name('profile');
     Route::delete('/profile/{id}', [ProfileController::class, 'destroy'])->name('profile.delete');
+    Route::post('/profile/{id}/balance-update', [ProfileController::class, 'updateBalance'])->name('profile.balance.update');
 
     // payment terms routes
     Route::put('/payment-terms/{paymentTerm}', [PaymentTermController::class, 'update'])->name('payment-terms.update');
