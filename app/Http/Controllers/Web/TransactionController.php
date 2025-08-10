@@ -34,10 +34,10 @@ class TransactionController extends Controller
                 'transactions.*',
                 DB::raw(
                     'CASE 
-                            WHEN transactions.owner = ' . $user->id . ' AND transactions.is_sms = false
-                            THEN transactions.amount
-                            ELSE transactions.amount * -1
-                            END as amount'
+                           WHEN transactions.owner = ' . $user->id . ' AND transactions.is_sms = false 
+                           THEN transactions.amount * -1
+                           ELSE transactions.amount
+                           END as display_amount'
                 )
             )
             ->orderByDesc('created_at')->paginate(20);
@@ -83,11 +83,11 @@ class TransactionController extends Controller
 
             // check if the owner has sufficient balance and if the transaction type is expense
             if ($validatedData['transaction_type'] === 'expense') {
-                if($owner->balance < $amount) {
+                if ($owner->balance < $amount) {
                     return redirect()->back()->withErrors(['message' => 'Insufficient balance']);
                 }
                 $amount = -abs($amount); // Convert to negative for expense
-            }else{
+            } else {
                 $amount = abs($amount);
             }
 
