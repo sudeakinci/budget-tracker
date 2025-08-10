@@ -53,26 +53,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const openBtn = document.getElementById('openLedgerModal');
-            const modal = document.getElementById('ledgerModal');
-            const closeBtn = document.getElementById('closeLedgerModal');
-
-            if (openBtn && modal && closeBtn) {
-                openBtn.addEventListener('click', function () {
-                    modal.classList.remove('hidden');
-                });
-
-                closeBtn.addEventListener('click', function () {
-                    modal.classList.add('hidden');
-                });
-
-                window.addEventListener('click', function (event) {
-                    if (event.target === modal) {
-                        modal.classList.add('hidden');
-                    }
-                });
-            }
-
             // dropdown toggle
             window.toggleDropdown = function (id) {
                 const dropdown = document.getElementById(`dropdown-${id}`);

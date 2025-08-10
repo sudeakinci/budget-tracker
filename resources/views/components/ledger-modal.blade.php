@@ -33,16 +33,12 @@
                 </div>
 
                 <div class="flex justify-end space-x-3">
-                    <button type="button" id="closeLedgerModal"
-                        class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none">
-                        Cancel
-                    </button>
                     <button type="submit" name="transaction_type" value="lent"
-                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none">
+                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none w-full">
                         Lend
                     </button>
                     <button type="submit" name="transaction_type" value="borrowed"
-                        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none">
+                        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none w-full">
                         Borrow
                     </button>
                 </div>
@@ -50,3 +46,22 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const openModal = document.getElementById('openLedgerModal');
+        const modal = document.getElementById('ledgerModal');
+
+        if(openModal && modal) {
+            openModal.addEventListener('click', function(){
+                modal.classList.remove('hidden');
+            });
+
+            window.addEventListener('click', function(event){
+                if(event.target === modal){
+                    modal.classList.add('hidden');
+                }
+            });
+        }
+    })
+</script>

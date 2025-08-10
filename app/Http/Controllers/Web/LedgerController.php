@@ -37,9 +37,10 @@ class LedgerController extends Controller
             ->select(
                 'transactions.*',
                 DB::raw(
-                    'CASE
-                            WHEN transactions.owner = ' . $user->id . ' THEN transactions.amount * -1
-                            ELSE transactions.amount
+                    'CASE 
+                            WHEN transactions.owner = ' . $user->id . ' AND transactions.is_sms = false
+                            THEN transactions.amount
+                            ELSE transactions.amount * -1
                             END as amount'
                 )
             )
@@ -81,9 +82,12 @@ class LedgerController extends Controller
                 if ($owner->balance < $amount) {
                     return redirect()->back()->withErrors(['message' => 'Insufficient balance']);
                 }
+                // when lending, it's an outgoing transaction from the owner (negative)
+                $amount = -abs($amount);
                 $description .= ' [lent]';
             } else {
-                $amount = $amount * -1;
+                // when borrowing, it's an incoming transaction to the owner (positive)
+                $amount = abs($amount);
                 $description .= ' [borrowed]';
             }
 
@@ -107,12 +111,12 @@ class LedgerController extends Controller
             }
 
             // update owner's balance
-            $owner->balance -= $amount;
+            $owner->balance += $amount; 
             $owner->save();
 
             // update other user's balance
             $otherUser = User::find($validatedData['user_id']);
-            $otherUser->balance += $amount;
+            $otherUser->balance -= $amount;
             $otherUser->save();
 
             DB::commit();
