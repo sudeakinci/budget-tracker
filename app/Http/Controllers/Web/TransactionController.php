@@ -34,8 +34,9 @@ class TransactionController extends Controller
                 'transactions.*',
                 DB::raw(
                     'CASE 
-                            WHEN transactions.owner = ' . $user->id . ' AND transactions.is_sms = false THEN transactions.amount * -1
-                            ELSE transactions.amount
+                            WHEN transactions.owner = ' . $user->id . ' AND transactions.is_sms = false
+                            THEN transactions.amount
+                            ELSE transactions.amount * -1
                             END as amount'
                 )
             )
@@ -71,15 +72,23 @@ class TransactionController extends Controller
             'user_id' => 'nullable|exists:users,id',
             'payment_term_id' => 'required_if:payment_type,select|nullable|exists:payment_terms,id',
             'payment_term_name' => 'required_if:payment_type,custom|nullable|string|max:255',
+            'transaction_type' => 'required|in:income,expense',
         ]);
 
         try {
             DB::beginTransaction();
 
             $owner = $user;
+            $amount = $validatedData['amount'];
 
-            if ($owner->balance < $validatedData['amount']) {
-                return redirect()->back()->withErrors(['message' => 'Insufficient balance']);
+            // check if the owner has sufficient balance and if the transaction type is expense
+            if ($validatedData['transaction_type'] === 'expense') {
+                if($owner->balance < $amount) {
+                    return redirect()->back()->withErrors(['message' => 'Insufficient balance']);
+                }
+                $amount = -abs($amount); // Convert to negative for expense
+            }else{
+                $amount = abs($amount);
             }
 
             $paymentTermId = $validatedData['payment_term_id'] ?? null;
@@ -97,7 +106,7 @@ class TransactionController extends Controller
                 'payment_term_id' => $paymentTermId,
                 'payment_term_name' => $paymentTermName,
                 'description' => $validatedData['description'] ?? null,
-                'amount' => $validatedData['amount'],
+                'amount' => $amount,
             ]);
 
             if (!$transaction) {
@@ -106,13 +115,13 @@ class TransactionController extends Controller
             }
 
             // update owner's balance
-            $owner->balance -= $validatedData['amount'];
+            $owner->balance += $amount;
             $owner->save();
 
             // if a receiver user is specified, update their balance
             if (isset($validatedData['user_id'])) {
                 $receiver = User::find($validatedData['user_id']);
-                $receiver->balance += $validatedData['amount'];
+                $receiver->balance -= $amount;
                 $receiver->save();
             }
 

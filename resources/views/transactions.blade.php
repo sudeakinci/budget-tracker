@@ -6,7 +6,7 @@
     <x-error-toast :errors="$errors" />
 
     <script>
-        // Toast'ları otomatik olarak gizle
+        // hide the toasts automatically
         ['successToast', 'errorToast'].forEach(function (id) {
             const toast = document.getElementById(id);
             if (toast) {
@@ -70,16 +70,11 @@
         document.addEventListener('DOMContentLoaded', function () {
             const openBtn = document.getElementById('openTransactionModal');
             const modal = document.getElementById('transactionModal');
-            const closeBtn = document.getElementById('closeTransactionModal');
 
             // transaction form modal logic
-            if (openBtn && modal && closeBtn) {
+            if (openBtn && modal) {
                 openBtn.addEventListener('click', function () {
                     modal.classList.remove('hidden');
-                });
-
-                closeBtn.addEventListener('click', function () {
-                    modal.classList.add('hidden');
                 });
 
                 window.addEventListener('click', function (event) {

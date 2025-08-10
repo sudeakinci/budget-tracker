@@ -55,7 +55,7 @@
                                 </svg>
                             </button>
                             <div id="dropdown-{{ $transaction->id }}"
-                                class="dropdown-menu hidden absolute right-0 mt-2 w-32 bg-white rounded-md shadow-lg z-40 overflow-visible max-h-48 overflow-y-auto">
+                                class="dropdown-menu hidden absolut w-32 bg-white bottom-0 ml-5 rounded-md shadow-lg z-40 overflow-visible max-h-48 overflow-y-auto">
                                 <div class="py-1">
                                     <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onclick="event.preventDefault(); showTransactionDetails({{ $transaction->id }}, 
                                 '{{ $transaction->created_at->format('d.m.Y H:i') }}', 
