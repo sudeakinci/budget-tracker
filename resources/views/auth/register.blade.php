@@ -31,7 +31,7 @@
             <h2 class="text-3xl font-extrabold text-gray-800 mb-2">Register</h2>
             <p class="text-gray-500 text-sm">Welcome! Please create an account.</p>
         </div>
-        
+
         <x-success-toast />
         <x-error-toast :errors="$errors" />
 
@@ -62,6 +62,9 @@
                     <input type="password" id="password" name="password" required
                         class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                         placeholder="Password">
+                    <span class="absolute right-3 top-2.5 text-gray-400 cursor-pointer" id="togglePassword">
+                        <i class="fa fa-eye-slash"></i>
+                    </span>
                 </div>
             </div>
             <div>
@@ -71,6 +74,9 @@
                     <input type="password" id="password_confirmation" name="password_confirmation" required
                         class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                         placeholder="Confirm Password">
+                    <span class="absolute right-3 top-2.5 text-gray-400 cursor-pointer" id="togglePasswordConfirmation">
+                        <i class="fa fa-eye-slash"></i>
+                    </span>
                 </div>
             </div>
 
@@ -93,6 +99,28 @@
             <a href="/login" class="text-blue-600 hover:underline font-medium ml-1">Log In</a>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('password');
+            togglePassword.addEventListener('click', function () {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.querySelector('i').classList.toggle('fa-eye');
+                this.querySelector('i').classList.toggle('fa-eye-slash');
+            });
+
+            const togglePasswordConfirm = document.getElementById('togglePasswordConfirmation');
+            const passwordConfirmInput = document.getElementById('password_confirmation');
+            togglePasswordConfirm.addEventListener('click', function () {
+                const type = passwordConfirmInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordConfirmInput.setAttribute('type', type);
+                this.querySelector('i').classList.toggle('fa-eye');
+                this.querySelector('i').classList.toggle('fa-eye-slash');
+            });
+        });
+    </script>
 </body>
 
 </html>

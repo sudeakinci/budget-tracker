@@ -35,8 +35,11 @@
                 <div class="relative">
                     <span class="absolute left-3 top-2.5 text-gray-400"><i class="fa fa-lock"></i></span>
                     <input type="password" id="password" name="password" required
-                        class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                        class="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                         placeholder="Password">
+                    <span class="absolute right-3 top-2.5 text-gray-400 cursor-pointer" id="togglePassword">
+                        <i class="fa fa-eye-slash"></i>
+                    </span>
                 </div>
             </div>
             <div class="flex items-center">
@@ -52,6 +55,23 @@
             <a href="/register" class="text-blue-600 hover:underline font-medium ml-1">Register</a>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('password');
+            
+            togglePassword.addEventListener('click', function() {
+                // toggle the type attribute
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                
+                // toggle the icon
+                this.querySelector('i').classList.toggle('fa-eye');
+                this.querySelector('i').classList.toggle('fa-eye-slash');
+            });
+        });
+    </script>
 </body>
 
 </html>
