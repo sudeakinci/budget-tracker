@@ -23,15 +23,15 @@ Route::get('/', function () {
 //authentication routes
 Route::controller(AuthController::class)->group(function () {
     Route::get('/login', 'showLoginForm')->name('login');
-    Route::post('/login', 'login');
+    Route::post('/login', 'login')->middleware('throttle:5,1'); // 5 attempts per minute
     Route::get('/register', 'showRegistrationForm')->name('register');
-    Route::post('/register', 'register');
+    Route::post('/register', 'register')->middleware('throttle:3,1'); // 3 attempts per minute
     Route::post('/logout', 'logout')->name('logout')->middleware('auth');
 
     // unlock account routes
     Route::get('/unlock-account', 'showUnlockForm')->name('unlock.account.request');
-    Route::post('/unlock-account', 'sendUnlockCode')->name('unlock.account.send');
-    Route::post('/unlock-account/verify', 'verifyUnlockCode')->name('unlock.account.verify');
+    Route::post('/unlock-account', 'sendUnlockCode')->name('unlock.account.send')->middleware('throttle:3,1'); // 3 attempts per minute
+    Route::post('/unlock-account/verify', 'verifyUnlockCode')->name('unlock.account.verify')->middleware('throttle:5,1'); // 5 attempts per minute
 
     Route::get('/verify-email', 'verifyEmail')->name('verify.email');
 });

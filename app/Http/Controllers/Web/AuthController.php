@@ -12,6 +12,7 @@ use Auth;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use \Illuminate\Http\Exceptions\ThrottleRequestsException;
 
 class AuthController extends Controller
 {
@@ -26,65 +27,81 @@ class AuthController extends Controller
     }
 
     public function register(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'name' => 'required|string',
-                'email' => 'required|email|unique:users',
-                'password' => 'required|string|min:6|confirmed',
-                'balance' => 'nullable|numeric|min:0',
-
-            ]);
-
-            $token = Str::random(32);
-
-
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'balance' => $validated['balance'] ?? 0,
-                'email_verified_at' => null,
-                'email_verification_token' => $token,
-            ]);
-
-            Mail::to($user->email)->send(new EmailVerificationMail($user));
-
-            Auth::login($user); // automatically log in the user after registration, starting their session
-
-            return redirect('/login')->with('success', 'Account created successfully. Please verify your email.');
-        } catch (ValidationException $e) {
-            return redirect()->back()->withErrors(['message' => 'Registration failed: ' . $e->getMessage()])->withInput();
-        }
-
-    }
-    public function login(Request $request)
-    {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
+{
+    try {
+        $validated = $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|string|min:6|confirmed',
+            'balance' => 'nullable|numeric|min:0',
         ]);
 
-        $user = User::withTrashed()->where('email', $credentials['email'])->first();
+        $token = Str::random(32);
 
-        if ($user && !$user->email_verified_at) {
-            return back()->withErrors(['email' => 'Please verify your email before logging in.']);
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'balance' => $validated['balance'] ?? 0,
+            'email_verified_at' => null,
+            'email_verification_token' => $token,
+        ]);
+
+        Mail::to($user->email)->send(new EmailVerificationMail($user));
+
+        Auth::login($user);
+
+        return redirect('/login')->with('success', 'Account created successfully. Please verify your email.');
+    } catch (ThrottleRequestsException $exception) {
+        return back()->withInput()->withErrors([
+            'email' => 'Too many registration attempts. Please try again later.',
+        ]);
+    } catch (ValidationException $e) {
+        return redirect()->back()->withErrors(['message' => 'Registration failed: ' . $e->getMessage()])->withInput();
+    } catch (\Exception $e) {
+        return back()->withInput()->withErrors([
+            'email' => 'An unexpected error occurred. Please try again.',
+        ]);
+    }
+}
+
+    public function login(Request $request)
+    {
+        try {
+            $credentials = $request->validate([
+                'email' => 'required|email',
+                'password' => 'required|string',
+            ]);
+
+            $user = User::withTrashed()->where('email', $credentials['email'])->first();
+
+            if ($user && !$user->email_verified_at) {
+                return back()->withErrors(['email' => 'Please verify your email before logging in.']);
+            }
+
+            $remember = $request->has('remember');
+
+            if (Auth::attempt($credentials, $remember)) {
+                $request->session()->regenerate();
+                return redirect()->intended('/dashboard');
+            }
+
+            if ($user && $user->trashed()) {
+                return $this->sendUnlockCode($request); // send unlock code if the user is soft-deleted
+            }
+
+            return back()->withErrors([
+                'email' => 'The provided credentials do not match our records.',
+            ])->withInput();
+        } catch (ThrottleRequestsException $exception) {
+            return back()->withInput()->withErrors([
+                'email' => 'Too many login attempts. Please try again later.',
+            ]);
+        } catch (\Exception $e) {
+            return back()->withInput()->withErrors([
+                'email' => 'An unexpected error occurred. Please try again.',
+            ]);
         }
-
-        $remember = $request->has('remember');
-
-        if (Auth::attempt($credentials, $remember)) {
-            $request->session()->regenerate();
-            return redirect()->intended('/dashboard');
-        }
-
-        if ($user && $user->trashed()) {
-            return $this->sendUnlockCode($request); // send unlock code if the user is soft-deleted
-        }
-
-        return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
-        ])->withInput();
     }
 
     public function logout(Request $request)
