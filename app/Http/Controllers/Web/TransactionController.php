@@ -42,7 +42,56 @@ class TransactionController extends Controller
             )
             ->orderByDesc('created_at')->paginate(20);
 
+        // calculate monthly statistics for last 3 months
+        $stats = [
+            'income' => ['m0' => 0, 'm1' => 0, 'm2' => 0],
+            'expense' => ['m0' => 0, 'm1' => 0, 'm2' => 0]
+        ];
+        
+        // get statistics for the last 3 months
+        $monthlyStats = Transaction::where(function ($query) use ($user) {
+                $query->where('owner', $user->id)
+                    ->orWhere('user_id', $user->id);
+            })
+            ->where('created_at', '>=', now()->subMonths(3))
+            ->select(
+                DB::raw('MONTH(created_at) as month'),
+                DB::raw('YEAR(created_at) as year'),
+                DB::raw('SUM(CASE 
+                    WHEN (owner = ' . $user->id . ' AND amount > 0) OR (user_id = ' . $user->id . ' AND amount < 0)
+                    THEN ABS(amount)
+                    ELSE 0 
+                    END) as income'),
+                DB::raw('SUM(CASE 
+                    WHEN (owner = ' . $user->id . ' AND amount < 0) OR (user_id = ' . $user->id . ' AND amount > 0)
+                    THEN ABS(amount) 
+                    ELSE 0 
+                    END) as expense')
+            )
+            ->groupBy('year', 'month')
+            ->orderBy('year', 'desc')
+            ->orderBy('month', 'desc')
+            ->get();
+        
+        // map the statistics to the stats array
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
 
+        // generate month names for the last 3 months
+        $monthNames = [];
+        for ($i = 0; $i < 3; $i++) {
+            $date = now()->subMonths($i);
+            $monthNames['m' . $i] = $date->format('F'); // full month name (e.g., "August")
+        }
+        
+        foreach ($monthlyStats as $index => $stat) {
+            $monthDiff = ($currentYear - $stat->year) * 12 + ($currentMonth - $stat->month);
+            
+            if ($monthDiff >= 0 && $monthDiff <= 2) {
+                $stats['expense']['m' . $monthDiff] = $stat->expense;
+                $stats['income']['m' . $monthDiff] = $stat->income;
+            }
+        }
 
         $users = User::where('id', '!=', $user->id)->get();
         $paymentTerms = PaymentTerm::whereNull('created_by')
@@ -54,6 +103,8 @@ class TransactionController extends Controller
             'users' => $users,
             'paymentTerms' => $paymentTerms,
             'balance' => $user->balance,
+            'stats' => $stats,
+            'monthNames' => $monthNames,
         ]);
     }
 
@@ -208,7 +259,7 @@ class TransactionController extends Controller
         }
 
         try {
-            $transaction = Transaction::findOrFail($id);
+            $transaction = Transaction::with('user')->findOrFail($id);
 
             if ($transaction->owner !== $user->id) {
                 return redirect()->back()->withErrors(['message' => 'You are not authorized to delete this transaction.']);
@@ -220,14 +271,25 @@ class TransactionController extends Controller
 
             DB::beginTransaction();
 
-            // restore the balance
-            $user->balance += $transaction->amount;
+            // Restore the owner's balance
+            $user->balance -= $transaction->amount; // Subtract because we're reversing the transaction
             $user->save();
 
-            // delete the transaction
+            // If there's a recipient user, update their balance too
+            if ($transaction->user_id) {
+                $receiver = User::find($transaction->user_id);
+                if ($receiver) {
+                    $receiver->balance += $transaction->amount; // Add because we're reversing the transaction for them
+                    $receiver->save();
+                }
+            }
+
+            // Delete the transaction
             $transaction->delete();
 
             DB::commit();
+            
+            // Redirect with flash message that will trigger JS to refresh the stats
             return redirect()->route('transactions')->with('status', 'Transaction was successfully deleted.');
         } catch (\Exception $e) {
             DB::rollBack();

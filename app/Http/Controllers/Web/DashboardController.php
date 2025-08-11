@@ -31,9 +31,9 @@ class DashboardController extends Controller
                 DB::raw(
                     'CASE 
                             WHEN transactions.owner = ' . $user->id . ' AND transactions.is_sms = false
-                            THEN transactions.amount
-                            ELSE transactions.amount * -1
-                            END as amount'
+                            THEN transactions.amount * -1
+                            ELSE transactions.amount
+                            END as display_amount'
                 )
             )
             ->orderByDesc('created_at')
