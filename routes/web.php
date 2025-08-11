@@ -48,6 +48,9 @@ Route::middleware('auth')->group(function () {
 
     // ledger routes
     Route::get('/ledger', [LedgerController::class, 'index'])->name('ledger');
+    
+    // payment terms routes
+    Route::get('/payment-terms', [PaymentTermController::class, 'index'])->name('payment-terms');
     Route::post('/ledger', [LedgerController::class, 'store'])->name('ledger.store');
 
     // profile routes

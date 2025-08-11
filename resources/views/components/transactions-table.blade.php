@@ -11,9 +11,9 @@
                 <th class="py-3 px-4 text-left font-semibold text-blue-700 w-48 cursor-pointer relative group" onclick="showFilterInput('date')">
                     <span class="flex items-center">
                         Date
-                        <span id="date-arrow" class="ml-1 transition-transform" onclick="toggleSort('date', event)">
+                        <span id="date-filter-icon" class="ml-1 transition-transform">
                             <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="inline-block align-middle">
-                                <path id="date-arrow-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                             </svg>
                         </span>
                     </span>
@@ -41,42 +41,39 @@
                             </div>
                         </div>
                     </th>
-                @endif
-                <th class="py-3 px-4 text-left font-semibold text-blue-700 w-60">Description</th>
-                <th class="py-3 px-4 text-left font-semibold text-blue-700 w-48 cursor-pointer relative group" onclick="showFilterInput('amount')">
+                @else
+                    <th class="py-3 px-4 text-left font-semibold text-blue-700 w-48 cursor-pointer relative group" onclick="showFilterInput('date')">
                     <span class="flex items-center">
-                        Amount
-                        <span id="amount-arrow" class="ml-1 transition-transform" onclick="toggleSort('amount', event)">
+                        Date
+                        <span id="date-arrow" class="ml-1 transition-transform" onclick="toggleSort('date', event)">
                             <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="inline-block align-middle">
-                                <path id="amount-arrow-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                <path id="date-arrow-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                             </svg>
                         </span>
                     </span>
-                    <div id="filter-amount" class="absolute left-0 top-full mt-2 bg-white border border-blue-200 rounded-xl shadow-2xl p-4 z-50 hidden min-w-[180px] animate-fade-in">
-                        <div class="flex gap-2 mb-2">
-                            <select class="border border-blue-300 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none" onchange="filterTable()">
-                                <option value="gt">&gt;</option>
-                                <option value="lt">&lt;</option>
-                                <option value="eq">=</option>
-                            </select>
-                            <input type="number" step="0.01" placeholder="Amount" class="border border-blue-300 rounded-lg px-3 py-2 text-sm w-20 focus:ring-2 focus:ring-blue-400 focus:outline-none" oninput="filterTable()" onblur="hideFilterInput('amount')">
-                        </div>
+                    <div id="filter-date" class="absolute left-0 top-full mt-2 bg-white border border-blue-200 rounded-xl shadow-2xl p-4 z-50 hidden min-w-[180px] animate-fade-in">
+                        <input type="date" class="border border-blue-300 rounded-lg px-3 py-2 text-sm w-full focus:ring-2 focus:ring-blue-400 focus:outline-none mb-2" oninput="filterTable()" onblur="hideFilterInput('date')">
                         <div class="flex justify-end">
-                            <button type="button" class="text-xs px-2 py-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-700" onclick="clearFilter('amount')">Clear</button>
+                            <button type="button" class="text-xs px-2 py-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-700" onclick="clearFilter('date')">Clear</button>
                         </div>
                     </div>
                 </th>
+                @endif
                 @if($showPaymentMethod)
                     <th class="py-3 px-4 text-left font-semibold text-blue-700 w-48">Payment Method</th>
                 @endif
+                <th class="py-3 px-4 text-left font-semibold text-blue-700 w-60">Description</th>
+                <th class="py-3 px-4 text-left font-semibold text-blue-700 w-32">Amount</th>
                 <th class="w-10"></th> <!-- empty title for icon -->
             </tr>
         </thead>
         <tbody>
             @foreach($transactions as $transaction)
                 <tr class="hover:bg-blue-50 {{ $loop->even ? 'bg-gray-50' : '' }} transaction-row"
-                    data-date="{{ $transaction->created_at->format('Y-m-d') }}"
+                    data-payment-method="{{ $transaction->payment_term_name ?: '-' }}"
+                    data-payment-term-id="{{ $transaction->payment_term_id }}"
                     data-receiver="{{ optional($transaction->user)->name ?: '-' }}"
+                    data-date="{{ $transaction->created_at->format('Y-m-d') }}"
                     data-amount="{{ $transaction->display_amount }}">
                     <td class="py-2 px-4 border-b border-gray-200 w-40">
                         {{ $transaction->created_at->format('d.m.Y H:i') }}
@@ -86,17 +83,18 @@
                             {{ optional($transaction->user)->name ?: '-' }}
                         </td>
                     @endif
+                    @if($showPaymentMethod)
+                        <td class="py-2 px-4 border-b border-gray-200 w-48">
+                            {{ $transaction->payment_term_name ?: '-' }}
+                        </td>
+                    @endif
                     <td class="py-2 px-4 border-b border-gray-200 w-64">{{ $transaction->description ?: '-' }}</td>
                     <td
                         class="py-2 px-4 border-b border-gray-200 font-semibold w-32 {{ $transaction->display_amount < 0 ? 'text-green-600' : 'text-red-600' }}">
                         {{ number_format(abs($transaction->display_amount), 2) }}
                         ₺
                     </td>
-                    @if($showPaymentMethod)
-                        <td class="py-2 px-4 border-b border-gray-200 w-48">
-                            {{ $transaction->payment_term_name }}
-                        </td>
-                    @endif
+
                     <td class="px-2 border-b border-gray-200 w-10 text-center align-middle">
                         <div class="relative dropdown">
                             <button onclick="toggleDropdown({{ $transaction->id }})" class="group focus:outline-none"
@@ -189,12 +187,12 @@ function clearFilter(type) {
 }
 
 function filterTable() {
-    // date
-    const dateInput = document.querySelector('#filter-date input');
-    const dateValue = dateInput ? dateInput.value : '';
     // receiver
     const receiverInput = document.querySelector('#filter-receiver input');
     const receiverValue = receiverInput ? receiverInput.value.toLowerCase() : '';
+    // date
+    const dateInput = document.querySelector('#filter-date input');
+    const dateValue = dateInput ? dateInput.value : '';
     // amount
     const amountSelect = document.querySelector('#filter-amount select');
     const amountInput = document.querySelector('#filter-amount input[type="number"]');
@@ -205,10 +203,10 @@ function filterTable() {
     const rows = Array.from(document.querySelectorAll('.transaction-row'));
     rows.forEach(row => {
         let visible = true;
-        // date filter
-        if (dateValue && row.getAttribute('data-date') !== dateValue) visible = false;
         // receiver filter
         if (receiverValue && !row.getAttribute('data-receiver').toLowerCase().includes(receiverValue)) visible = false;
+        // date filter
+        if (dateValue && row.getAttribute('data-date') !== dateValue) visible = false;
         // amount filter
         if (amountValue !== null) {
             const rowAmount = parseFloat(row.getAttribute('data-amount'));

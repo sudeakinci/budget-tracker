@@ -16,7 +16,8 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            overflow-y: scroll; /* Prevents body from scrolling */
+            overflow-y: scroll;
+            /* Prevents body from scrolling */
         }
 
         .transition-all {
@@ -50,7 +51,6 @@
         .nav-link.active {
             font-weight: 600;
         }
-
     </style>
 </head>
 
@@ -77,7 +77,10 @@
                         class="nav-link {{ request()->routeIs('transactions') ? 'active' : '' }}">Transactions</a>
                     <a href="{{ route('ledger') }}"
                         class="nav-link {{ request()->routeIs('ledger') ? 'active' : '' }}">Ledger</a>
-                    <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">My Account</a>
+                    <a href="{{ route('payment-terms') }}"
+                        class="nav-link {{ request()->routeIs('payment-terms') ? 'active' : '' }}">Payment Terms</a>
+                    <a href="{{ route('profile') }}"
+                        class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">My Account</a>
                 </nav>
                 <div class="flex items-center space-x-2 ml-4">
                     @auth
@@ -100,13 +103,16 @@
         <!-- Mobile Menu -->
         <div id="mobile-menu" class="md:hidden hidden px-4 pb-4">
             <nav class="flex flex-col space-y-2 mb-2">
-                    <a href="{{ route('dashboard') }}"
-                        class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">Dashboard</a>
-                    <a href="{{ route('transactions') }}"
-                        class="nav-link {{ request()->routeIs('transactions') ? 'active' : '' }}">Transactions</a>
-                    <a href="{{ route('ledger') }}"
-                        class="nav-link {{ request()->routeIs('ledger') ? 'active' : '' }}">Ledger</a>
-                    <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">My Account</a>
+                <a href="{{ route('dashboard') }}"
+                    class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">Dashboard</a>
+                <a href="{{ route('transactions') }}"
+                    class="nav-link {{ request()->routeIs('transactions') ? 'active' : '' }}">Transactions</a>
+                <a href="{{ route('payment-terms') }}"
+                    class="nav-link {{ request()->routeIs('payment-terms') ? 'active' : '' }}">Payment Terms</a>
+                <a href="{{ route('ledger') }}"
+                    class="nav-link {{ request()->routeIs('ledger') ? 'active' : '' }}">Ledger</a>
+                <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">My
+                    Account</a>
             </nav>
             <div class="flex flex-col space-y-2">
                 @auth
