@@ -31,7 +31,7 @@
                     first transaction</a>
             </div>
         @else
-            <x-transactions-table :transactions="$transactions" :show-receiver="false" :show-payment-method="true" :row-count="5" />
+            <x-transactions-table :transactions="$transactions" :show-receiver="true" :row-count="5" />
             <div class="px-6 py-3 bg-gray-50 text-right">
                 <a href="{{ route('transactions') }}" class="text-blue-600 hover:underline text-sm font-medium">
                     View All Transactions
@@ -78,7 +78,8 @@
             class="bg-white p-4 rounded-lg shadow border border-blue-100 hover:border-blue-300 transition flex items-center">
             <div class="rounded-full bg-blue-100 p-3 mr-3">
                 <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <rect x="4" y="4" width="16" height="16" rx="2" stroke-width="2" stroke="currentColor" fill="none" />
+                    <rect x="4" y="4" width="16" height="16" rx="2" stroke-width="2" stroke="currentColor"
+                        fill="none" />
                     <line x1="8" y1="4" x2="8" y2="20" stroke-width="2" stroke="currentColor" />
                     <line x1="16" y1="8" x2="8" y2="8" stroke-width="1.5" stroke="currentColor" />
                     <line x1="16" y1="12" x2="8" y2="12" stroke-width="1.5" stroke="currentColor" />
@@ -90,7 +91,7 @@
                 <p class="text-xs text-gray-500">View your ledger entries</p>
             </div>
         </a>
-        
+
         <x-transaction-modal :users="$users" :paymentTerms="$paymentTerms" />
         <x-transaction-edit-modal :paymentTerms="$paymentTerms" />
 
