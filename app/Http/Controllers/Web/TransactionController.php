@@ -145,8 +145,16 @@ class TransactionController extends Controller
             $paymentTermId = $validatedData['payment_term_id'] ?? null;
             $paymentTermName = $validatedData['payment_term_name'] ?? null;
 
-            // if payment term is not provided, fetch it from the database
-            if (!$paymentTermName) {
+            // If custom payment term is provided, create a new payment term record
+            if ($validatedData['payment_type'] === 'custom' && $paymentTermName) {
+                $paymentTerm = PaymentTerm::create([
+                    'name' => $paymentTermName,
+                    'created_by' => $owner->id
+                ]);
+                $paymentTermId = $paymentTerm->id;
+            }
+            // If payment term is selected but name is not provided, fetch it from the database
+            elseif (!$paymentTermName && $paymentTermId) {
                 $paymentTerm = PaymentTerm::findOrFail($paymentTermId);
                 $paymentTermName = $paymentTerm->name;
             }

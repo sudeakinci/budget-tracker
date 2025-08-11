@@ -4,11 +4,46 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\PaymentTerm;
+use App\Models\Transaction;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 class PaymentTermController extends Controller
 {
+    public function index()
+    {
+        $user = Auth::user();
+        
+        // Get all payment terms created by the authenticated user
+        $paymentTerms = PaymentTerm::where('created_by', $user->id)
+            ->withCount('transactions')
+            ->orderBy('name')
+            ->get();
+            
+        // Get all transactions that use any payment term
+        $transactions = Transaction::with(['paymentTerm', 'user', 'owner'])
+            ->where(function ($query) use ($user) {
+                $query->where('owner', $user->id)
+                    ->orWhere('user_id', $user->id);
+            })
+            ->whereNotNull('payment_term_id')
+            ->select(
+                'transactions.*',
+                \DB::raw(
+                    'CASE 
+                           WHEN transactions.owner = ' . $user->id . ' AND transactions.is_sms = false 
+                           THEN transactions.amount * -1
+                           ELSE transactions.amount
+                           END as display_amount'
+                )
+            )
+            ->orderByDesc('created_at')
+            ->get();
+            
+        return view('payment-terms', compact('paymentTerms', 'transactions'));
+    }
+
     public function update(Request $request, PaymentTerm $paymentTerm)
     {
         $user = Auth::user();

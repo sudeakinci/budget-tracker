@@ -28,32 +28,6 @@
                         <input type="text" id="edit-description" name="description" 
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                     </div>
-
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
-                        <div class="flex items-center mb-2">
-                            <input type="radio" name="payment_type" id="edit-select-payment" value="select" checked
-                                class="mr-2">
-                            <label for="edit-select-payment" class="text-sm">Select Method</label>
-
-                            <input type="radio" name="payment_type" id="edit-custom-payment" value="custom"
-                                class="ml-4 mr-2">
-                            <label for="edit-custom-payment" class="text-sm">Enter Method</label>
-                        </div>
-
-                        <select name="payment_term_id" id="edit-payment-select"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                            <option value="">Select a payment method</option>
-                            @foreach($paymentTerms as $term)
-                                <option value="{{ $term->id }}">{{ $term->name }}</option>
-                            @endforeach
-                        </select>
-
-                        <input type="text" name="payment_term_name" id="edit-payment-input"
-                            placeholder="Enter payment method"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 mt-2 hidden">
-                    </div>
-
                     <!-- footer with buttons -->
                     <div class="flex justify-end items-center space-x-3 border-t border-gray-100 pt-4 mt-4">
                         <button type="button" id="closeEditModal"
@@ -75,10 +49,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     const editModal = document.getElementById('transactionEditModal');
     const closeEditBtn = document.getElementById('closeEditModal');
-    const editSelectPayment = document.getElementById('edit-select-payment');
-    const editCustomPayment = document.getElementById('edit-custom-payment');
-    const editPaymentSelect = document.getElementById('edit-payment-select');
-    const editPaymentInput = document.getElementById('edit-payment-input');
 
     if (closeEditBtn && editModal) {
         // close edit modal
@@ -93,53 +63,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // toggle payment selection/input
-    if (editSelectPayment && editCustomPayment && editPaymentSelect && editPaymentInput) {
-        editSelectPayment.addEventListener('change', function() {
-            if (this.checked) {
-                editPaymentSelect.classList.remove('hidden');
-                editPaymentInput.classList.add('hidden');
-            }
-        });
 
-        editCustomPayment.addEventListener('change', function() {
-            if (this.checked) {
-                editPaymentSelect.classList.add('hidden');
-                editPaymentInput.classList.remove('hidden');
-            }
-        });
-    }
 });
 
 window.editTransaction = function(id, description, paymentTermName, paymentTermId) {
     // get form elements
     const form = document.getElementById('editTransactionForm');
     const descriptionInput = document.getElementById('edit-description');
-    const selectPayment = document.getElementById('edit-select-payment');
-    const customPayment = document.getElementById('edit-custom-payment');
-    const paymentSelect = document.getElementById('edit-payment-select');
-    const paymentInput = document.getElementById('edit-payment-input');
-
     // set the form action URL
     form.action = `/transactions/${id}`;
 
     // fill the description
     descriptionInput.value = description;
-
-    // set up payment method
-    if (paymentTermId) {
-        selectPayment.checked = true;
-        customPayment.checked = false;
-        paymentSelect.value = paymentTermId;
-        paymentSelect.classList.remove('hidden');
-        paymentInput.classList.add('hidden');
-    } else {
-        selectPayment.checked = false;
-        customPayment.checked = true;
-        paymentInput.value = paymentTermName;
-        paymentSelect.classList.add('hidden');
-        paymentInput.classList.remove('hidden');
-    }
 
     // show the modal
     document.getElementById('transactionEditModal').classList.remove('hidden');
