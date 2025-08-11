@@ -5,29 +5,24 @@
 ])
 
 <div class="overflow-x-visible">
-    <!-- filter Badges -->
-    <div id="active-filters" class="mb-3 flex flex-wrap items-center gap-2 hidden">
-        <span class="text-sm font-medium text-gray-600">Filtered by:</span>
+    <!-- filter badges -->
+    <div id="active-filters" class="mb-3 flex flex-wrap items-center gap-1 hidden">
+        <span class="text-sm font-semibold text-gray-700">Filtered by:</span>
         <div id="date-filter-badge" class="filter-badge hidden">
             <span class="filter-text"></span>
             <button type="button" onclick="clearFilter('date')" class="ml-1 text-gray-500 hover:text-gray-700">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
             </button>
         </div>
-        <div id="receiver-filter-badge" class="filter-badge hidden">
-            <span class="filter-text"></span>
-            <button type="button" onclick="clearFilter('receiver')" class="ml-1 text-gray-500 hover:text-gray-700">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
+        <div id="receiver-filter-container" class="hidden flex items-center">
+            <div id="receiver-filter-badges" class="flex flex-wrap gap-1 items-center ml-1"></div>
         </div>
-        <div id="amount-filter-badge" class="filter-badge hidden">
+        <div id="amount-filter-badge" class="inline-flex items-center bg-blue-50 text-blue-700 text-xs font-medium px-2 py-1 rounded-md border border-blue-100">
             <span class="filter-text"></span>
             <button type="button" onclick="clearFilter('amount')" class="ml-1 text-gray-500 hover:text-gray-700">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
             </button>
@@ -50,7 +45,7 @@
                         </span>
                     </span>
                     <div id="filter-date" class="absolute left-0 top-full mt-2 bg-white border border-blue-200 rounded-xl shadow-2xl p-4 z-50 hidden min-w-[180px] animate-fade-in">
-                        <input type="date" class="border border-blue-300 rounded-lg px-3 py-2 text-sm w-full focus:ring-2 focus:ring-blue-400 focus:outline-none mb-2" oninput="filterTable()" onblur="hideFilterInput('date')">
+                        <input type="date" class="border border-blue-300 rounded-lg px-3 py-2 text-sm w-full focus:ring-2 focus:ring-blue-400 focus:outline-none mb-2" oninput="filterTable()">
                         <div class="flex justify-end">
                             <button type="button" class="text-xs px-2 py-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-700" onclick="clearFilter('date')">Clear</button>
                         </div>
@@ -66,10 +61,20 @@
                                 </svg>
                             </span>
                         </span>
-                        <div id="filter-receiver" class="absolute left-0 top-full mt-2 bg-white border border-blue-200 rounded-xl shadow-2xl p-4 z-50 hidden min-w-[180px] animate-fade-in">
-                            <input type="text" placeholder="Filter by receiver" class="border border-blue-300 rounded-lg px-3 py-2 text-sm w-full focus:ring-2 focus:ring-blue-400 focus:outline-none mb-2" oninput="filterTable()" onblur="hideFilterInput('receiver')">
-                            <div class="flex justify-end">
-                                <button type="button" class="text-xs px-2 py-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-700" onclick="clearFilter('receiver')">Clear</button>
+                        <div id="filter-receiver" class="absolute left-0 top-full mt-2 bg-white border border-blue-200 rounded-xl shadow-2xl p-4 z-50 hidden min-w-[300px] animate-fade-in">
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Select Receivers</label>
+                                <div class="relative">
+                                    <input type="text" id="receiver-search" placeholder="Search receivers..." 
+                                        class="border border-blue-300 rounded-lg px-3 py-2 text-sm w-full focus:ring-2 focus:ring-blue-400 focus:outline-none mb-2"
+                                        oninput="filterReceiverOptions()">
+                                    <div id="receiver-options" class="max-h-48 overflow-y-auto border border-blue-100 rounded-md bg-white mb-3"></div>
+                                </div>
+                            </div>
+                            <div id="selected-receivers" class="flex flex-wrap gap-1 mb-3 empty:hidden"></div>
+                            <div class="flex justify-between">
+                                <button type="button" class="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700" onclick="selectAllReceivers()">Select All</button>
+                                <button type="button" class="text-xs px-2 py-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-700" onclick="applyReceiverFilter()">Apply</button>
                             </div>
                         </div>
                     </th>
@@ -84,7 +89,7 @@
                         </span>
                     </span>
                     <div id="filter-date" class="absolute left-0 top-full mt-2 bg-white border border-blue-200 rounded-xl shadow-2xl p-4 z-50 hidden min-w-[180px] animate-fade-in">
-                        <input type="date" class="border border-blue-300 rounded-lg px-3 py-2 text-sm w-full focus:ring-2 focus:ring-blue-400 focus:outline-none mb-2" oninput="filterTable()" onblur="hideFilterInput('date')">
+                        <input type="date" class="border border-blue-300 rounded-lg px-3 py-2 text-sm w-full focus:ring-2 focus:ring-blue-400 focus:outline-none mb-2" oninput="filterTable()">
                         <div class="flex justify-end">
                             <button type="button" class="text-xs px-2 py-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-700" onclick="clearFilter('date')">Clear</button>
                         </div>
@@ -261,10 +266,61 @@
 
 /* Filter badges styles */
 .filter-badge {
-    @apply flex items-center bg-blue-50 text-blue-700 text-xs font-medium px-2.5 py-1.5 rounded-full;
+    @apply flex items-center bg-blue-50 text-blue-700 text-xs font-medium px-2 py-1 rounded-md border border-blue-100;
 }
 
 #active-filters {
+    animation: fade-in 0.3s ease;
+}
+
+/* Receiver filter styles */
+#receiver-options {
+    border: 1px solid #e2e8f0;
+    border-radius: 0.375rem;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+#receiver-options div {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    user-select: none;
+}
+
+#receiver-options div:hover {
+    background-color: #f1f5f9;
+}
+
+#receiver-options div:not(:last-child) {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+#selected-receivers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+#receiver-filter-badges span {
+    animation: fade-in 0.2s ease;
+}
+
+/* Style the checkboxes */
+#receiver-options input[type="checkbox"] {
+    accent-color: #2563eb;
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.5rem;
+}
+
+/* Add some spacing between filter badges */
+#receiver-filter-container {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
     animation: fade-in 0.3s ease;
 }
 </style>
@@ -278,10 +334,11 @@ let sortState = {
 let currentOpenFilter = null;
 
 function showFilterInput(type) {
-    // If clicking the same filter, toggle it
+    // Prevent event propagation to avoid immediate closure by document click listener
+    event.stopPropagation();
+    
+    // If clicking the same filter that's already open, do nothing (let the outside click handler close it)
     if (currentOpenFilter === type) {
-        document.getElementById('filter-' + type).classList.add('hidden');
-        currentOpenFilter = null;
         return;
     }
     
@@ -298,17 +355,17 @@ function showFilterInput(type) {
 }
 
 function hideFilterInput(type) {
-    setTimeout(() => {
-        document.getElementById('filter-' + type).classList.add('hidden');
-        if (currentOpenFilter === type) {
-            currentOpenFilter = null;
-        }
-    }, 200);
+    // Remove this function as we'll handle filter hiding through the document click handler
 }
 
 // Close filter when clicking outside
 document.addEventListener('click', function(event) {
-    if (!event.target.closest('[id^="filter-"]') && !event.target.closest('[onclick*="showFilterInput"]')) {
+    // Check if click was outside filter elements and filter headers
+    if (!event.target.closest('[id^="filter-"]') && 
+        !event.target.closest('[onclick*="showFilterInput"]') &&
+        !event.target.closest('[onclick*="applyReceiverFilter"]') && 
+        !event.target.closest('[onclick*="setAmountFilter"]')) {
+        // Close all filter popups
         document.querySelectorAll('[id^="filter-"]').forEach(el => el.classList.add('hidden'));
         currentOpenFilter = null;
     }
@@ -324,7 +381,7 @@ function clearFilter(type) {
             el.selectedIndex = 0;
         });
         
-        // If it's the amount filter, also update the button states
+        // Special handling for different filter types
         if (type === 'amount') {
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.classList.remove('active');
@@ -336,12 +393,24 @@ function clearFilter(type) {
             // Reset the filter icon state
             const amountFilterIcon = document.querySelector('#amount-filter-icon');
             amountFilterIcon.classList.remove('text-blue-500', 'font-bold');
-        }
-        
-        // Hide filter badge for this type
-        const badge = document.getElementById(type + '-filter-badge');
-        if (badge) {
-            badge.classList.add('hidden');
+            
+            // Hide filter badge for amount
+            const badge = document.getElementById(type + '-filter-badge');
+            if (badge) {
+                badge.classList.add('hidden');
+            }
+        } else if (type === 'receiver') {
+            // Clear selected receivers
+            selectedReceivers = [];
+            updateSelectedReceiversDisplay();
+            updateReceiverFilterBadges();
+            document.getElementById('receiver-filter-container').classList.add('hidden');
+        } else if (type === 'date') {
+            // Hide filter badge for date
+            const badge = document.getElementById(type + '-filter-badge');
+            if (badge) {
+                badge.classList.add('hidden');
+            }
         }
     }
     
@@ -382,11 +451,8 @@ function setAmountFilter(element, value) {
         document.getElementById('amount-filter-badge').classList.add('hidden');
     }
     
-    // Hide the filter popup after selection
-    setTimeout(() => {
-        document.getElementById('filter-amount').classList.add('hidden');
-        currentOpenFilter = null;
-    }, 200);
+    // We don't need to auto-close here anymore
+    // Let the document click handler take care of closing when clicking outside
     
     updateActiveFiltersVisibility();
 }
@@ -394,13 +460,26 @@ function setAmountFilter(element, value) {
 function updateActiveFiltersVisibility() {
     // Check if any filter is active
     const hasDateFilter = document.querySelector('#filter-date input')?.value;
-    const hasReceiverFilter = document.querySelector('#filter-receiver input')?.value;
+    const hasReceiverFilter = selectedReceivers.length > 0;
     const hasAmountFilter = document.querySelector('#amount-filter-value')?.value !== 'all';
     
     const activeFiltersContainer = document.getElementById('active-filters');
     
     if (hasDateFilter || hasReceiverFilter || hasAmountFilter) {
         activeFiltersContainer.classList.remove('hidden');
+        
+        // Update filter labels to be consistent
+        if (hasDateFilter) {
+            document.getElementById('date-filter-badge').classList.remove('hidden');
+        } else {
+            document.getElementById('date-filter-badge').classList.add('hidden');
+        }
+        
+        if (hasAmountFilter) {
+            document.getElementById('amount-filter-badge').classList.remove('hidden');
+        } else {
+            document.getElementById('amount-filter-badge').classList.add('hidden');
+        }
     } else {
         activeFiltersContainer.classList.add('hidden');
     }
@@ -412,17 +491,201 @@ function clearAllFilters() {
     clearFilter('receiver');
     clearFilter('amount');
     
+    // Additional cleanup for receiver filter
+    selectedReceivers = [];
+    updateSelectedReceiversDisplay();
+    document.getElementById('receiver-filter-badges').innerHTML = '';
+    document.getElementById('receiver-filter-container').classList.add('hidden');
+    
     // Hide the active filters container
     document.getElementById('active-filters').classList.add('hidden');
+    
+    // Make sure all rows are visible
+    const rows = document.querySelectorAll('.transaction-row');
+    rows.forEach(row => row.classList.remove('hidden'));
+    
+    // Update empty rows indicator
+    updateEmptyRows();
+}
+
+// Store selected receivers
+let selectedReceivers = [];
+let allReceivers = [];
+
+// Initialize receivers on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeReceivers();
+    
+    // Add click event handlers to filter elements to stop propagation
+    document.querySelectorAll('[id^="filter-"]').forEach(filter => {
+        filter.addEventListener('click', function(event) {
+            event.stopPropagation();
+        });
+    });
+});
+
+function initializeReceivers() {
+    // Get all unique receivers from the table
+    allReceivers = Array.from(document.querySelectorAll('.transaction-row'))
+        .map(row => row.getAttribute('data-receiver'))
+        .filter(receiver => receiver && receiver !== '-')
+        .filter((value, index, self) => self.indexOf(value) === index)
+        .sort();
+    
+    updateReceiverOptions();
+}
+
+function updateReceiverOptions() {
+    const optionsContainer = document.getElementById('receiver-options');
+    optionsContainer.innerHTML = '';
+    
+    const searchTerm = document.getElementById('receiver-search').value.toLowerCase();
+    
+    const filteredReceivers = allReceivers.filter(
+        receiver => receiver.toLowerCase().includes(searchTerm)
+    );
+    
+    if (filteredReceivers.length === 0) {
+        const noResults = document.createElement('div');
+        noResults.className = 'py-2 px-3 text-sm text-gray-500 text-center';
+        noResults.textContent = 'No receivers found';
+        optionsContainer.appendChild(noResults);
+        return;
+    }
+    
+    filteredReceivers.forEach(receiver => {
+        const option = document.createElement('div');
+        option.className = 'py-2 px-3 text-sm hover:bg-blue-50 cursor-pointer flex items-center';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500';
+        checkbox.checked = selectedReceivers.includes(receiver);
+        checkbox.addEventListener('change', function() {
+            toggleReceiver(receiver, this.checked);
+        });
+        
+        const label = document.createElement('span');
+        label.textContent = receiver;
+        label.className = 'flex-grow';
+        
+        option.appendChild(checkbox);
+        option.appendChild(label);
+        
+        // Allow clicking the entire row to toggle
+        option.addEventListener('click', function(e) {
+            if (e.target !== checkbox) {
+                checkbox.checked = !checkbox.checked;
+                toggleReceiver(receiver, checkbox.checked);
+            }
+        });
+        
+        optionsContainer.appendChild(option);
+    });
+}
+
+function filterReceiverOptions() {
+    updateReceiverOptions();
+}
+
+function toggleReceiver(receiver, isSelected) {
+    if (isSelected && !selectedReceivers.includes(receiver)) {
+        selectedReceivers.push(receiver);
+    } else if (!isSelected && selectedReceivers.includes(receiver)) {
+        selectedReceivers = selectedReceivers.filter(r => r !== receiver);
+    }
+    updateSelectedReceiversDisplay();
+}
+
+function updateSelectedReceiversDisplay() {
+    const container = document.getElementById('selected-receivers');
+    container.innerHTML = '';
+    
+    selectedReceivers.forEach(receiver => {
+        const badge = document.createElement('span');
+        badge.className = 'inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded';
+        
+        const text = document.createElement('span');
+        text.textContent = receiver;
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'ml-1 text-blue-600 hover:text-blue-800';
+        removeBtn.innerHTML = '&times;';
+        removeBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleReceiver(receiver, false);
+            updateReceiverOptions();
+        });
+        
+        badge.appendChild(text);
+        badge.appendChild(removeBtn);
+        container.appendChild(badge);
+    });
+}
+
+function selectAllReceivers() {
+    const checkboxes = document.querySelectorAll('#receiver-options input[type="checkbox"]');
+    const isAnyUnchecked = Array.from(checkboxes).some(cb => !cb.checked);
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = isAnyUnchecked;
+        const receiverName = checkbox.parentElement.querySelector('span').textContent;
+        toggleReceiver(receiverName, isAnyUnchecked);
+    });
+}
+
+function applyReceiverFilter() {
+    // We don't need to manually hide the filter popup
+    // Just apply the filter and let the document click handler close it when appropriate
+    
+    // Update UI to show applied filters
+    updateReceiverFilterBadges();
+    filterTable();
+    
+    // Stop propagation of click event to prevent immediate closure
+    event.stopPropagation();
+}
+
+function updateReceiverFilterBadges() {
+    const container = document.getElementById('receiver-filter-badges');
+    container.innerHTML = '';
+    
+    if (selectedReceivers.length === 0) {
+        document.getElementById('receiver-filter-container').classList.add('hidden');
+        return;
+    }
+    
+    document.getElementById('receiver-filter-container').classList.remove('hidden');
+    
+    selectedReceivers.forEach(receiver => {
+        const badge = document.createElement('span');
+        badge.className = 'inline-flex items-center bg-blue-50 text-blue-700 text-xs font-medium px-2 py-1 rounded-md border border-blue-100';
+        
+        const text = document.createElement('span');
+        text.textContent = receiver;
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'ml-1 text-gray-500 hover:text-gray-700';
+        removeBtn.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+        removeBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleReceiver(receiver, false);
+            updateReceiverOptions();
+            updateReceiverFilterBadges();
+            filterTable();
+        });
+        
+        badge.appendChild(text);
+        badge.appendChild(removeBtn);
+        container.appendChild(badge);
+    });
 }
 
 function filterTable() {
-    // receiver
-    const receiverInput = document.querySelector('#filter-receiver input');
-    const receiverValue = receiverInput ? receiverInput.value.toLowerCase() : '';
     // date
     const dateInput = document.querySelector('#filter-date input');
     const dateValue = dateInput ? dateInput.value : '';
+    
     // amount type filter (income/expense)
     const amountTypeSelect = document.querySelector('#amount-filter-value');
     const amountType = amountTypeSelect ? amountTypeSelect.value : 'all';
@@ -442,21 +705,19 @@ function filterTable() {
         document.getElementById('date-filter-badge').classList.add('hidden');
     }
     
-    if (receiverValue) {
-        document.querySelector('#receiver-filter-badge .filter-text').textContent = `Receiver: ${receiverValue}`;
-        document.getElementById('receiver-filter-badge').classList.remove('hidden');
-    } else {
-        document.getElementById('receiver-filter-badge').classList.add('hidden');
-    }
-    
     updateActiveFiltersVisibility();
 
     // rows
     const rows = Array.from(document.querySelectorAll('.transaction-row'));
     rows.forEach(row => {
         let visible = true;
-        // receiver filter
-        if (receiverValue && !row.getAttribute('data-receiver').toLowerCase().includes(receiverValue)) visible = false;
+        
+        // receiver filter - check if row's receiver is in the selected receivers list
+        if (selectedReceivers.length > 0) {
+            const rowReceiver = row.getAttribute('data-receiver');
+            if (!selectedReceivers.includes(rowReceiver)) visible = false;
+        }
+        
         // date filter
         if (dateValue && row.getAttribute('data-date') !== dateValue) visible = false;
         
