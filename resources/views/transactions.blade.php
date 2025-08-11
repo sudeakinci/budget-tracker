@@ -57,8 +57,14 @@
                 $expense = $stats['expense'][$monthKey] ?? 0;
                 $income = $stats['income'][$monthKey] ?? 0;
                 $netAmount = $income - $expense;
-                $icon = $netAmount >= 0 ? 'income' : 'expense';
-                $color = $netAmount >= 0 ? 'green' : 'red';
+                
+                if ($netAmount == 0) {
+                    $icon = 'minus';
+                    $color = 'gray';
+                } else {
+                    $icon = $netAmount > 0 ? 'income' : 'expense';
+                    $color = $netAmount > 0 ? 'green' : 'red';
+                }
             @endphp
             <x-info-cards
                 title="{{ $monthName }} Overview"
@@ -97,8 +103,14 @@
         $totalExpense = is_array($stats['expense']) ? array_sum($stats['expense']) : 0;
         $totalIncome = is_array($stats['income']) ? array_sum($stats['income']) : 0;
         $netAmount = $totalIncome - $totalExpense;
-        $icon = $netAmount >= 0 ? 'income' : 'expense';
-        $color = $netAmount >= 0 ? 'green' : 'red';
+        
+        if ($netAmount == 0) {
+            $icon = 'minus';
+            $color = 'gray';
+        } else {
+            $icon = $netAmount > 0 ? 'income' : 'expense';
+            $color = $netAmount > 0 ? 'green' : 'red';
+        }
     @endphp
     <x-info-cards
         title="Total Overview"

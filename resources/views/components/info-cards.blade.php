@@ -68,6 +68,16 @@
             'trend-stable' => 'text-gray-600',
             'hover' => 'hover:bg-purple-100'
         ],
+        'gray' => [
+            'bg' => 'bg-gray-50',
+            'border' => 'border-gray-200',
+            'text' => 'text-gray-700',
+            'icon' => 'text-gray-500',
+            'trend-up' => 'text-gray-600',
+            'trend-down' => 'text-gray-600',
+            'trend-stable' => 'text-gray-600',
+            'hover' => 'hover:bg-gray-100'
+        ],
     ];
 
     $icons = [
@@ -78,20 +88,27 @@
         'calendar' => 'fas fa-calendar-alt',
         'credit' => 'fas fa-hand-holding-usd',
         'debt' => 'fas fa-file-invoice-dollar',
-        'minus' => 'fas fa-minus'
+        'minus' => 'fas fa-minus',
+        'income' => 'fas fa-arrow-up',
+        'expense' => 'fas fa-arrow-down',
     ];
 
     // determine if we should format as currency
     $formatAsCurrency = in_array($type, ['transaction', 'ledger', 'balance']);
+    
+    if ($amount == 0) {
+        $color = 'gray';
+        $icon = 'minus';
+    }
 @endphp
 
-<div class="col-xl-6 col-md-12 mb-4 {{ $attributes->get('class') }}">
-    <div class="card rounded-lg shadow-sm border {{ $colors[$color]['border'] }} h-full" style="min-height:70px;">
-        <div class="card-body p-2" style="min-height:50px;">
-            <div class="d-flex justify-content-between">
-                <div class="d-flex flex-row">
+<div class="col-xl-3 col-md-6 mb-2 {{ $attributes->get('class') }}">
+    <div class="card rounded-lg shadow-sm border {{ $colors[$color]['border'] }} h-full transition-shadow duration-300 hover:shadow-md" style="min-height:50px;">
+        <div class="card-body p-1" style="min-height:40px;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex flex-row align-items-center">
                     <div class="align-self-center">
-                        <h2 class="h2 mb-0 me-2 font-bold {{ $colors[$color]['text'] }}" style="font-size:1.1rem;">
+                        <h2 class="h2 mb-0 me-1 font-bold {{ $colors[$color]['text'] }}" style="font-size:0.9rem;">
                             @if($formatAsCurrency)
                                 ₺{{ number_format($amount, 2) }}
                             @else
@@ -99,26 +116,26 @@
                             @endif
                         </h2>
                     </div>
-                    <div class="ms-3">
-                        <h4 class="text-base font-semibold text-gray-800">{{ $title }}</h4>
+                    <div class="ms-2">
+                        <h4 class="text-sm font-semibold text-gray-800 mb-0">{{ $title }}</h4>
                         <p class="mb-0 text-xs text-gray-600">{{ $period }}</p>
                         
                         @if($subtitle)
-                            <p class="text-xs text-gray-500" style="font-size:0.7rem;">{{ $subtitle }}</p>
+                            <p class="text-xs text-gray-500 mb-0" style="font-size:0.65rem;">{{ $subtitle }}</p>
                         @endif
                         
                         @if($trend)
-                            <div class="flex items-center mt-1">
+                            <div class="flex items-center">
                                 @if($trend === 'up')
-                                    <i class="fas fa-arrow-up {{ $colors[$color]['trend-up'] }} text-xs mr-1"></i>
+                                    <i class="fas fa-arrow-up {{ $colors[$color]['trend-up'] }} text-xs mr-1" style="font-size:0.6rem;"></i>
                                 @elseif($trend === 'down')
-                                    <i class="fas fa-arrow-down {{ $colors[$color]['trend-down'] }} text-xs mr-1"></i>
+                                    <i class="fas fa-arrow-down {{ $colors[$color]['trend-down'] }} text-xs mr-1" style="font-size:0.6rem;"></i>
                                 @else
-                                    <i class="fas fa-minus {{ $colors[$color]['trend-stable'] }} text-xs mr-1"></i>
+                                    <i class="fas fa-minus {{ $colors[$color]['trend-stable'] }} text-xs mr-1" style="font-size:0.6rem;"></i>
                                 @endif
                                 
                                 @if($trendPercentage)
-                                    <span class="text-xs {{ $trend === 'up' ? $colors[$color]['trend-up'] : ($trend === 'down' ? $colors[$color]['trend-down'] : $colors[$color]['trend-stable']) }}">
+                                    <span style="font-size:0.6rem;" class="{{ $trend === 'up' ? $colors[$color]['trend-up'] : ($trend === 'down' ? $colors[$color]['trend-down'] : $colors[$color]['trend-stable']) }}">
                                         {{ $trendPercentage }}%
                                     </span>
                                 @endif
@@ -126,15 +143,15 @@
                         @endif
                     </div>
                 </div>
-                <div class="align-self-center {{ $colors[$color]['bg'] }} p-3 rounded-full">
-                    <i class="{{ $icons[$icon] ?? $icon }} {{ $colors[$color]['icon'] }} fa-2x"></i>
+                <div class="align-self-center {{ $colors[$color]['bg'] }} p-1 rounded-full">
+                    <i class="{{ $icons[$icon] ?? $icon }} {{ $colors[$color]['icon'] }} fa-sm"></i>
                 </div>
             </div>
             
             @if(($type === 'ledger' || $type === 'transaction') && $stats && $monthNames)
-            <div class="mt-4">
-                <div class="text-sm font-semibold mb-2">Last 3 Months</div>
-                <div class="grid grid-cols-3 gap-2">
+            <div class="mt-2">
+                <div class="text-xs font-semibold mb-1">Last 3 Months</div>
+                <div class="grid grid-cols-3 gap-1">
                     @foreach(array_keys($monthNames) as $key)
                         @php
                             $monthName = $monthNames[$key];
@@ -156,9 +173,9 @@
                                 $textColor = $isPositive ? 'text-green-700' : 'text-red-700';
                             }
                         @endphp
-                        <div class="p-2 {{ $bgColor }} rounded">
-                            <div class="text-xs text-gray-600">{{ $monthName }}</div>
-                            <div class="font-bold {{ $textColor }}">
+                        <div class="p-1 {{ $bgColor }} rounded">
+                            <div class="text-xs text-gray-600" style="font-size:0.6rem;">{{ $monthName }}</div>
+                            <div class="font-bold {{ $textColor }}" style="font-size:0.7rem;">
                                 ₺{{ number_format($value, 2) }}
                             </div>
                         </div>
@@ -168,8 +185,8 @@
             @endif
             
             @if($compareValue !== null)
-            <div class="mt-3 pt-3 border-t border-gray-200">
-                <div class="flex justify-between text-sm">
+            <div class="mt-2 pt-1 border-t border-gray-200">
+                <div class="flex justify-between text-xs">
                     <span class="text-gray-600">Compared to:</span>
                     <span class="font-semibold {{ $compareValue >= 0 ? 'text-green-600' : 'text-red-600' }}">
                         {{ $compareValue >= 0 ? '+' : '' }}₺{{ number_format($compareValue, 2) }}
@@ -180,8 +197,8 @@
         </div>
         
         @if($showFooter && $footerLink && $footerText)
-        <div class="card-footer p-3 bg-gray-50 border-t border-gray-200">
-            <a href="{{ $footerLink }}" class="text-sm font-medium {{ $colors[$color]['text'] }} hover:underline flex items-center justify-end">
+        <div class="card-footer p-1 bg-gray-50 border-t border-gray-200">
+            <a href="{{ $footerLink }}" class="text-xs font-medium {{ $colors[$color]['text'] }} hover:underline flex items-center justify-end">
                 {{ $footerText }}
                 <i class="fas fa-chevron-right ml-1 text-xs"></i>
             </a>
