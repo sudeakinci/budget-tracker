@@ -724,8 +724,8 @@ function filterTable() {
         // amount type filter (income/expense)
         if (amountType !== 'all') {
             const rowAmount = parseFloat(row.getAttribute('data-amount'));
-            if (amountType === 'income' && rowAmount <= 0) visible = false;
-            if (amountType === 'expense' && rowAmount >= 0) visible = false;
+            if (amountType === 'income' && rowAmount >= 0) visible = false;
+            if (amountType === 'expense' && rowAmount <= 0) visible = false;
         }
         
         // amount value filter (if present)
