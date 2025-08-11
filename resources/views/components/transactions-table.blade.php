@@ -2,7 +2,6 @@
     'transactions',
     'showReceiver' => true,
     'showPaymentMethod' => false,
-    'rowCount' => 20,
 ])
 
 <div class="overflow-x-visible">
@@ -78,7 +77,7 @@
                 <tr class="hover:bg-blue-50 {{ $loop->even ? 'bg-gray-50' : '' }} transaction-row"
                     data-date="{{ $transaction->created_at->format('Y-m-d') }}"
                     data-receiver="{{ optional($transaction->user)->name ?: '-' }}"
-                    data-amount="{{ $transaction->amount }}">
+                    data-amount="{{ $transaction->display_amount }}">
                     <td class="py-2 px-4 border-b border-gray-200 w-40">
                         {{ $transaction->created_at->format('d.m.Y H:i') }}
                     </td>
@@ -89,8 +88,8 @@
                     @endif
                     <td class="py-2 px-4 border-b border-gray-200 w-64">{{ $transaction->description ?: '-' }}</td>
                     <td
-                        class="py-2 px-4 border-b border-gray-200 font-semibold w-32 {{ $transaction->amount < 0 ? 'text-red-600' : 'text-green-600' }}">
-                        {{ number_format(abs($transaction->amount), 2) }}
+                        class="py-2 px-4 border-b border-gray-200 font-semibold w-32 {{ $transaction->display_amount < 0 ? 'text-green-600' : 'text-red-600' }}">
+                        {{ number_format(abs($transaction->display_amount), 2) }}
                         ₺
                     </td>
                     @if($showPaymentMethod)
@@ -115,7 +114,7 @@
                                     <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onclick="event.preventDefault(); showTransactionDetails({{ $transaction->id }}, 
                                 '{{ $transaction->created_at->format('d.m.Y H:i') }}', 
                                 '{{ $transaction->description ?: 'No description' }}', 
-                                '{{ number_format($transaction->amount, 2) }} ₺', 
+                                '{{ number_format($transaction->display_amount, 2) }} ₺', 
                                 '{{ optional($transaction->user)->name ?: '-' }}',
                                 '{{ $transaction->payment_term_name }}')">
                                         <span class="flex items-center">
@@ -190,27 +189,27 @@ function clearFilter(type) {
 }
 
 function filterTable() {
-    // Date
+    // date
     const dateInput = document.querySelector('#filter-date input');
     const dateValue = dateInput ? dateInput.value : '';
-    // Receiver
+    // receiver
     const receiverInput = document.querySelector('#filter-receiver input');
     const receiverValue = receiverInput ? receiverInput.value.toLowerCase() : '';
-    // Amount
+    // amount
     const amountSelect = document.querySelector('#filter-amount select');
     const amountInput = document.querySelector('#filter-amount input[type="number"]');
     const amountOperator = amountSelect ? amountSelect.value : 'gt';
     const amountValue = amountInput && amountInput.value !== '' ? parseFloat(amountInput.value) : null;
 
-    // Rows
+    // rows
     const rows = Array.from(document.querySelectorAll('.transaction-row'));
     rows.forEach(row => {
         let visible = true;
-        // Date filter
+        // date filter
         if (dateValue && row.getAttribute('data-date') !== dateValue) visible = false;
-        // Receiver filter
+        // receiver filter
         if (receiverValue && !row.getAttribute('data-receiver').toLowerCase().includes(receiverValue)) visible = false;
-        // Amount filter
+        // amount filter
         if (amountValue !== null) {
             const rowAmount = parseFloat(row.getAttribute('data-amount'));
             if (amountOperator === 'gt' && !(rowAmount > amountValue)) visible = false;
@@ -256,6 +255,4 @@ function sortTable(type, direction) {
     rows.forEach(row => tbody.appendChild(row));
     updateEmptyRows();
 }
-
-// Empty rows removed, no updateEmptyRows needed
 </script>

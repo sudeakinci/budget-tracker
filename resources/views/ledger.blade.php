@@ -22,16 +22,41 @@
         <h1 class="text-2xl font-bold text-gray-800">Ledger</h1>
     </div>
 
-    <div class="flex items-end mb-4 justify-between">
-        <div class="bg-blue-50 border border-blue-200 text-blue-700 rounded px-3 py-1 shadow text-sm flex items-center">
-            <i class="fas fa-wallet mr-1"></i>
-            <span class="font-semibold">Balance:</span>
-            <span class="ml-1">{{ number_format($balance, 2) }}</span>
+    <div class="mb-4">
+        <div class="flex justify-between items-center mb-2">
+            <div class="bg-blue-50 border border-blue-200 text-blue-700 rounded px-3 py-1 shadow text-sm flex items-center">
+                <i class="fas fa-wallet mr-1"></i>
+                <span class="font-semibold">Balance:</span>
+                <span class="ml-1">{{ number_format($balance, 2) }}</span>
+            </div>
+
+            <button type="button" id="openLedgerModal"
+                class="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none ">New
+                Transaction</button>
         </div>
 
-        <button type="button" id="openLedgerModal"
-            class="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none ">New
-            Entry</button>
+    <!-- 3-month summary cards -->
+    <div class="grid grid-cols-3 gap-2 mb-4">
+        @for ($i = 0; $i < 3; $i++)
+            @php
+                $monthKey = 'm' . $i;
+                $monthName = $monthNames[$monthKey] ?? '';
+                $debt = $stats['debt'][$monthKey] ?? 0;
+                $credit = $stats['credit'][$monthKey] ?? 0;
+                $netAmount = $credit - $debt;
+                $icon = $netAmount >= 0 ? 'credit' : 'debt';
+                $color = $netAmount >= 0 ? 'green' : 'red';
+            @endphp
+            <x-info-cards
+                title="{{ $monthName }} Overview"
+                type="ledger"
+                :amount="$netAmount"
+                period="{{ $monthName }}"
+                :icon="$icon"
+                :color="$color"
+                subtitle="Net (Credit - Debt)"
+            />
+        @endfor
     </div>
 
     <x-ledger-modal :users="$users" />
@@ -41,15 +66,36 @@
 
     <!-- transaction edit modal -->
     <x-transaction-edit-modal :paymentTerms="$paymentTerms" />
+    
+    <div class="bg-white rounded-lg shadow-md p-4 border border-gray-200 mb-4">
+        @if($transactions->isEmpty())
+            <p class="mt-4 text-gray-600">No ledger entries found.</p>
+        @else
+            <x-transactions-table :transactions="$transactions" :show-receiver="true" :row-count="20" :is-ledger="true" />
+            <div class="mt-2">
+                {{ $transactions->links() }}
+            </div>
+        @endif
+    </div>
 
-    @if($transactions->isEmpty())
-        <p class="mt-4 text-gray-600">No ledger entries found.</p>
-    @else
-        <x-transactions-table :transactions="$transactions" :show-receiver="true" :row-count="20" />
-        <div class="mt-2">
-            {{ $transactions->links() }}
-        </div>
-    @endif
+    <!-- summary cards -->
+        @php
+            $totalDebt = is_array($stats['debt']) ? array_sum($stats['debt']) : 0;
+            $totalCredit = is_array($stats['credit']) ? array_sum($stats['credit']) : 0;
+            $netAmount = $totalCredit - $totalDebt;
+            $icon = $netAmount >= 0 ? 'credit' : 'debt';
+            $color = $netAmount >= 0 ? 'green' : 'red';
+        @endphp
+        <x-info-cards
+            title="Total Overview"
+            type="ledger"
+            :amount="$netAmount"
+            period="Total"
+            :icon="$icon"
+            :color="$color"
+            subtitle="Net (Credit - Debt)"
+        />
+    
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
