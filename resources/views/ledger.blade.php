@@ -79,6 +79,8 @@
     </div>
 
     <!-- summary cards -->
+    <div class="grid grid-cols-2 gap-4">
+        <!-- Overall total summary card -->
         @php
             $totalDebt = is_array($stats['debt']) ? array_sum($stats['debt']) : 0;
             $totalCredit = is_array($stats['credit']) ? array_sum($stats['credit']) : 0;
@@ -87,14 +89,51 @@
             $color = $netAmount >= 0 ? 'green' : 'red';
         @endphp
         <x-info-cards
-            title="Total Overview"
+            title="Overall Total"
             type="ledger"
             :amount="$netAmount"
-            period="Total"
+            period="All Time"
             :icon="$icon"
             :color="$color"
             subtitle="Net (Credit - Debt)"
         />
+        
+        <!-- Filtered transactions summary card -->
+        @php
+            $filteredCredit = 0;
+            $filteredDebt = 0;
+            $user = Auth::user();
+            
+            if($transactions->isNotEmpty()) {
+                foreach($transactions as $transaction) {
+                    // Exactly match the controller's calculation logic
+                    // Credit: (owner = user AND amount > 0) OR (user_id = user AND amount < 0)
+                    if (($transaction->owner == $user->id && $transaction->amount > 0) || 
+                        ($transaction->user_id == $user->id && $transaction->amount < 0)) {
+                        $filteredCredit += abs($transaction->amount);
+                    }
+                    // Debt: (owner = user AND amount < 0) OR (user_id = user AND amount > 0)
+                    else if (($transaction->owner == $user->id && $transaction->amount < 0) || 
+                             ($transaction->user_id == $user->id && $transaction->amount > 0)) {
+                        $filteredDebt += abs($transaction->amount);
+                    }
+                }
+            }
+            
+            $filteredNetAmount = $filteredCredit - $filteredDebt;
+            $filteredIcon = $filteredNetAmount >= 0 ? 'credit' : 'debt';
+            $filteredColor = $filteredNetAmount >= 0 ? 'green' : 'red';
+        @endphp
+        <x-info-cards
+            title="Filtered Total"
+            type="ledger"
+            :amount="$filteredNetAmount"
+            period="Filtered Data"
+            :icon="$filteredIcon"
+            :color="$filteredColor"
+            subtitle="Current View Summary"
+        />
+    </div>
     
 
     <script>

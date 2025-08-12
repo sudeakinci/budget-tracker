@@ -101,50 +101,59 @@
         });
 
         function filterTransactionsByPaymentTerm(paymentTermId, paymentTermName) {
-            const rows = document.querySelectorAll('.transaction-row');
-            let anyVisible = false;
-
-            rows.forEach(row => {
-                const isVisible = row.dataset.paymentTermId == paymentTermId;
-                row.style.display = isVisible ? '' : 'none';
-                if (isVisible) anyVisible = true;
-            });
-
-            // filter badge
+            // Show loading indicator
+            showLoadingIndicator();
+            
+            // Build the URL with filter parameters
+            const currentUrl = new URL(window.location.href);
+            const params = new URLSearchParams(currentUrl.search);
+            
+            // Set payment_term_id filter parameter
+            params.set('payment_term_id', paymentTermId);
+            
+            // Update filter badge
             const filterBadge = document.getElementById('filter-badge');
             const filterText = document.getElementById('filter-text');
             filterBadge.classList.remove('hidden');
             filterText.textContent = `Filtered by: ${paymentTermName}`;
-
-            // message if no transactions found
-            const tbody = document.querySelector('tbody');
-            let noResultsRow = document.getElementById('no-transactions-found');
-
-            if (!anyVisible) {
-                if (!noResultsRow) {
-                    noResultsRow = document.createElement('tr');
-                    noResultsRow.id = 'no-transactions-found';
-                    noResultsRow.innerHTML = `<td colspan="5" class="py-4 text-center text-gray-500">No transactions found for this payment term</td>`;
-                    tbody.appendChild(noResultsRow);
-                }
-            } else if (noResultsRow) {
-                noResultsRow.remove();
+            
+            // Redirect to filtered URL
+            window.location.href = `${currentUrl.pathname}?${params.toString()}`;
+        }
+        
+        // Show loading indicator when filter is applied
+        function showLoadingIndicator() {
+            // Create loading overlay if it doesn't exist
+            if (!document.getElementById('loading-overlay')) {
+                const overlay = document.createElement('div');
+                overlay.id = 'loading-overlay';
+                overlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+                overlay.innerHTML = `
+                    <div class="bg-white p-4 rounded-lg shadow-lg flex items-center">
+                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Loading...</span>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
             }
         }
 
         function clearPaymentTermFilter() {
-            const rows = document.querySelectorAll('.transaction-row');
-
-            rows.forEach(row => {
-                row.style.display = '';
-            });
-
-            document.getElementById('filter-badge').classList.add('hidden');
-
-            const noResultsRow = document.getElementById('no-transactions-found');
-            if (noResultsRow) {
-                noResultsRow.remove();
-            }
+            // Show loading indicator
+            showLoadingIndicator();
+            
+            // Remove the payment_term_id parameter and reload
+            const currentUrl = new URL(window.location.href);
+            const params = new URLSearchParams(currentUrl.search);
+            
+            // Remove payment_term_id filter
+            params.delete('payment_term_id');
+            
+            // Redirect to filtered URL
+            window.location.href = `${currentUrl.pathname}?${params.toString()}`;
         }
     </script>
 

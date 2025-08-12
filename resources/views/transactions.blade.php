@@ -99,28 +99,65 @@
         @endif
     </div>
 
-    <!-- total summary card -->
-    @php
-        $totalExpense = is_array($stats['expense']) ? array_sum($stats['expense']) : 0;
-        $totalIncome = is_array($stats['income']) ? array_sum($stats['income']) : 0;
-        $netAmount = $totalIncome - $totalExpense;
+    <!-- total summary cards -->
+    <div class="grid grid-cols-2 gap-4">
+        <!-- Overall total summary card -->
+        @php
+            $totalExpense = is_array($stats['expense']) ? array_sum($stats['expense']) : 0;
+            $totalIncome = is_array($stats['income']) ? array_sum($stats['income']) : 0;
+            $netAmount = $totalIncome - $totalExpense;
 
-        if ($netAmount == 0) {
-            $type = 'default';
-            $color = 'gray';
-            $icon = 'minus';
-        } elseif ($netAmount > 0) {
-            $type = 'credit'; // yeşil
-            $color = 'green';
-            $icon = 'credit';
-        } else {
-            $type = 'debt'; // kırmızı
-            $color = 'red';
-            $icon = 'debt';
-        }
-    @endphp
-    <x-info-cards title="Total Overview" :type="$type" :amount="$netAmount" period="Total" :icon="$icon" :color="$color"
-        subtitle="Net (Income - Expense)" />
+            if ($netAmount == 0) {
+                $type = 'default';
+                $color = 'gray';
+                $icon = 'minus';
+            } elseif ($netAmount > 0) {
+                $type = 'credit'; // yeşil
+                $color = 'green';
+                $icon = 'credit';
+            } else {
+                $type = 'debt'; // kırmızı
+                $color = 'red';
+                $icon = 'debt';
+            }
+        @endphp
+        <x-info-cards title="Overall Total" :type="$type" :amount="$netAmount" period="All Time" :icon="$icon" :color="$color"
+            subtitle="Net (Income - Expense)" />
+            
+        <!-- Filtered transactions summary card -->
+        @php
+            $filteredIncome = 0;
+            $filteredExpense = 0;
+            
+            if($transactions->isNotEmpty()) {
+                foreach($transactions as $transaction) {
+                    if($transaction->display_amount > 0) {
+                        $filteredExpense += $transaction->display_amount;
+                    } else {
+                        $filteredIncome += abs($transaction->display_amount);
+                    }
+                }
+            }
+            
+            $filteredNetAmount = $filteredIncome - $filteredExpense;
+            
+            if ($filteredNetAmount == 0) {
+                $filteredType = 'default';
+                $filteredColor = 'gray';
+                $filteredIcon = 'minus';
+            } elseif ($filteredNetAmount > 0) {
+                $filteredType = 'credit'; // yeşil
+                $filteredColor = 'green';
+                $filteredIcon = 'credit';
+            } else {
+                $filteredType = 'debt'; // kırmızı
+                $filteredColor = 'red';
+                $filteredIcon = 'debt';
+            }
+        @endphp
+        <x-info-cards title="Filtered Total" :type="$filteredType" :amount="$filteredNetAmount" period="Filtered Data" :icon="$filteredIcon" :color="$filteredColor"
+            subtitle="Current View Summary" />
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {

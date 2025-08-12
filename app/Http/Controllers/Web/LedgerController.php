@@ -17,7 +17,7 @@ class LedgerController extends Controller
         $this->middleware = ['auth'];
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
 
@@ -25,7 +25,10 @@ class LedgerController extends Controller
             return redirect()->route('login');
         }
 
-        $transactions = Transaction::with(['owner', 'user'])
+        $amountType = $request->input('amount_type', 'all');
+        $receiverFilter = $request->input('receiver');
+
+        $query = Transaction::with(['owner', 'user'])
             ->where(function ($query) use ($user) {
                 $query->where('owner', $user->id)
                     ->orWhere('user_id', $user->id);
@@ -43,8 +46,38 @@ class LedgerController extends Controller
                             ELSE transactions.amount
                             END as display_amount'
                 )
-            )
-            ->orderByDesc('created_at')->paginate(20);
+            );
+            
+        // Apply amount type filter (income/expense)
+        if ($amountType !== 'all') {
+            if ($amountType === 'income') {
+                $query->where(DB::raw(
+                    'CASE 
+                        WHEN transactions.owner = ' . $user->id . ' AND transactions.is_sms = false 
+                        THEN transactions.amount * -1
+                        ELSE transactions.amount
+                        END'
+                ), '<', 0); // Income is negative in display_amount
+            } elseif ($amountType === 'expense') {
+                $query->where(DB::raw(
+                    'CASE 
+                        WHEN transactions.owner = ' . $user->id . ' AND transactions.is_sms = false 
+                        THEN transactions.amount * -1
+                        ELSE transactions.amount
+                        END'
+                ), '>', 0); // Expense is positive in display_amount
+            }
+        }
+        
+        // Apply receiver filter if provided
+        if ($receiverFilter) {
+            $receivers = explode(',', $receiverFilter);
+            $query->whereHas('user', function($q) use ($receivers) {
+                $q->whereIn('name', $receivers);
+            });
+        }
+            
+        $transactions = $query->orderByDesc('created_at')->paginate(20);
 
         $users = User::where('id', '!=', $user->id)->get();
         $paymentTerms = PaymentTerm::where('created_by', $user->id)->get();
