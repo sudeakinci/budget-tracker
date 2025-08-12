@@ -49,9 +49,10 @@ class AuthController extends Controller
 
         Mail::to($user->email)->send(new EmailVerificationMail($user));
 
-        Auth::login($user);
+        // Do not automatically log in the user
+        // Auth::login($user); -- Removed
 
-        return redirect('/login')->with('success', 'Account created successfully. Please verify your email.');
+        return redirect('/login')->with('success', 'Account created successfully. Please check your email to verify your account before logging in.');
     } catch (ThrottleRequestsException $exception) {
         return back()->withInput()->withErrors([
             'email' => 'Too many registration attempts. Please try again later.',
@@ -187,5 +188,29 @@ class AuthController extends Controller
         $user->save();
 
         return redirect('/login')->with('success', 'Email verified. You can now log in.');
+    }
+
+    /**
+     * Resend the email verification notification.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function resendVerificationEmail(Request $request)
+    {
+        $user = $request->user();
+
+        if ($user->email_verified_at) {
+            return redirect('/dashboard');
+        }
+
+        // Generate a new token
+        $user->email_verification_token = Str::random(32);
+        $user->save();
+
+        // Send the verification email
+        Mail::to($user->email)->send(new EmailVerificationMail($user));
+
+        return back()->with('status', 'verification-link-sent');
     }
 }

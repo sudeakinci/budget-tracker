@@ -34,10 +34,16 @@ Route::controller(AuthController::class)->group(function () {
     Route::post('/unlock-account/verify', 'verifyUnlockCode')->name('unlock.account.verify')->middleware('throttle:5,1'); // 5 attempts per minute
 
     Route::get('/verify-email', 'verifyEmail')->name('verify.email');
+    Route::get('/email/verify', function () {
+        return view('auth.verify-email');
+    })->middleware('auth')->name('verification.notice');
+    Route::post('/email/verification-notification', [AuthController::class, 'resendVerificationEmail'])
+        ->middleware(['auth', 'throttle:6,1'])
+        ->name('verification.send');
 });
 
 // protected routes
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // transaction routes

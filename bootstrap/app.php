@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\CustomThrottleRequests;
+use App\Http\Middleware\EnsureEmailIsVerified;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -16,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // custom middleware
         $middleware->alias([
             'throttle' => CustomThrottleRequests::class,
+            'verified' => EnsureEmailIsVerified::class,
         ]);
 
         // Ensure the throttle middleware is properly prioritized
