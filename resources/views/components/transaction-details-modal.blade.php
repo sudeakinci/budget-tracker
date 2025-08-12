@@ -51,19 +51,6 @@
                         class="px-4 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 focus:outline-none transition-colors">
                         Close
                     </button>
-                    <form id="deleteTransactionForm" method="POST" class="inline">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit"
-                            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none transition-colors flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                                </path>
-                            </svg>
-                            Delete
-                        </button>
-                    </form>
                 </div>
             </div>
         </div>
@@ -97,9 +84,6 @@ window.showTransactionDetails = function(id, date, description, amount, receiver
     document.getElementById('detail-amount').textContent = amount;
     document.getElementById('detail-receiver').textContent = receiver;
     document.getElementById('detail-payment-method').textContent = paymentMethod;
-
-    // Set up the delete form action
-    document.getElementById('deleteTransactionForm').action = `/transactions/${id}`;
 
     // Show the modal
     document.getElementById('transactionDetailsModal').classList.remove('hidden');
