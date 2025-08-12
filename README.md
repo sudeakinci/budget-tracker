@@ -39,6 +39,24 @@ cp .env.example .env
 php artisan key:generate
 ```
 
+#### Email Configuration (SMTP)
+Update the following variables in your `.env` file:
+
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password  # Use App Password for Gmail
+MAIL_FROM_ADDRESS="your-email@gmail.com"
+MAIL_ENCRYPTION=tls
+```
+
+**For Gmail:**
+1. Enable 2-Factor Authentication
+2. Generate App Password at: https://myaccount.google.com/apppasswords
+3. Use the App Password instead of your regular password
+
 ### 4. Database Setup
 
 #### SQLite (Recommended for Development)
