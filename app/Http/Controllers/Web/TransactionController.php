@@ -17,7 +17,7 @@ class TransactionController extends Controller
         $this->middleware = ['auth'];
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
 
@@ -25,11 +25,15 @@ class TransactionController extends Controller
             return redirect()->route('login');
         }
 
+        $startDate = $request->input('start_date', now()->startOfYear()->format('Y-m-d'));
+        $endDate = $request->input('end_date', now()->format('Y-m-d'));
+
         $transactions = Transaction::with(['owner', 'user'])
             ->where(function ($query) use ($user) {
                 $query->where('owner', $user->id)
                     ->orWhere('user_id', $user->id);
             })
+            ->whereBetween('created_at', [$startDate, $endDate . ' 23:59:59'])
             ->select(
                 'transactions.*',
                 DB::raw(
@@ -105,6 +109,8 @@ class TransactionController extends Controller
             'balance' => $user->balance,
             'stats' => $stats,
             'monthNames' => $monthNames,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
         ]);
     }
 

@@ -39,7 +39,7 @@ class PaymentTermController extends Controller
                 )
             )
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(20);
             
         return view('payment-terms', compact('paymentTerms', 'transactions'));
     }

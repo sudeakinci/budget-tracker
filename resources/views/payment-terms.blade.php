@@ -59,11 +59,21 @@
             </div>
         </div>
 
-        <x-transactions-table :transactions="$transactions" :showReceiver="true" :showPaymentMethod="true" />
-        
+        <div class="p-4 pl-0 pr-0 mb-4">
+            @if($transactions->isEmpty())
+                <p class="mt-4 text-gray-600">No transaction found.</p>
+            @else
+                <x-transactions-table :transactions="$transactions" :showReceiver="true" :showPaymentMethod="true"
+                    :row-count="20" />
+                <div class="mt-2">
+                    {{ $transactions->appends(request()->query())->links() }}
+                </div>
+            @endif
+        </div>
+
         <x-transaction-details-modal />
 
-        <x-transaction-edit-modal :paymentTerms="$paymentTerms"/>
+        <x-transaction-edit-modal :paymentTerms="$paymentTerms" />
 
     </div>
 

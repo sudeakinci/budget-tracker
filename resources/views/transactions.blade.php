@@ -87,13 +87,15 @@
     <!-- transaction edit modal -->
     <x-transaction-edit-modal :paymentTerms="$paymentTerms" />
 
-    <div class="bg-white rounded-lg shadow-md p-4 border border-gray-200 mb-4">
-        @if($transactions->isEmpty())
-            <p class="mt-4 text-gray-600">No transactions found.</p>
-        @else
+        <div class="p-4 pl-0 pr-0 mb-4">
+        @if($transactions->isNotEmpty())
             <x-transactions-table :transactions="$transactions" :show-receiver="true" :row-count="20" />
             <div class="mt-2">
-                {{ $transactions->links() }}
+                {{ $transactions->appends(request()->query())->links() }}
+            </div>
+        @else
+            <div class="text-center py-12">
+                <p class="text-gray-500">No transactions found for the selected criteria.</p>
             </div>
         @endif
     </div>
