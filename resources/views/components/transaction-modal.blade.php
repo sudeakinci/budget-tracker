@@ -28,6 +28,14 @@
                 </div>
 
                 <div class="mb-5">
+                    <label for="transaction_date" class="block text-sm font-semibold text-gray-700 mb-2">Transaction Date</label>
+                    <input type="datetime-local" name="transaction_date" id="transaction_date"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition shadow-sm hover:border-blue-400"
+                        value="{{ now()->format('Y-m-d\TH:i') }}">
+                    <p class="text-xs text-gray-400 mt-1">Select date and time for this transaction</p>
+                </div>
+
+                <div class="mb-5">
                     <label id="person_label" class="block text-sm font-semibold text-gray-700 mb-2">Sender</label>
                     <div class="flex items-center mb-2 gap-4">
                         <label class="flex items-center cursor-pointer">
@@ -206,6 +214,9 @@
             personLabel.textContent = 'Sender';
             transactionTypeInput.value = 'income';
 
+            // Reset date to current time
+            document.getElementById('transaction_date').value = getCurrentDateTime();
+
             selectUser.checked = true;
             userSelectContainer.classList.remove('hidden');
             userInputContainer.classList.add('hidden');
@@ -213,6 +224,14 @@
             selectPayment.checked = true;
             paymentSelectContainer.classList.remove('hidden');
             paymentInputContainer.classList.add('hidden');
+        }
+        
+        // Helper function to get current date time in the format needed for datetime-local input
+        function getCurrentDateTime() {
+            const now = new Date();
+            return new Date(now.getTime() - (now.getTimezoneOffset() * 60000))
+                .toISOString()
+                .slice(0, 16); // Format: YYYY-MM-DDTHH:MM
         }
     });
 </script>

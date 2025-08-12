@@ -162,6 +162,9 @@ class TransactionController extends Controller
             'payment_term_id' => 'required_if:payment_type,select|nullable|exists:payment_terms,id',
             'payment_term_name' => 'required_if:payment_type,custom|nullable|string|max:255',
             'transaction_type' => 'required|in:income,expense',
+            'transaction_date' => 'nullable|date',
+            'created_at' => 'nullable|date',
+            'updated_at' => 'nullable|date',
         ]);
 
         try {
@@ -204,6 +207,8 @@ class TransactionController extends Controller
                 'payment_term_name' => $paymentTermName,
                 'description' => $validatedData['description'] ?? null,
                 'amount' => $amount,
+                'created_at' => $request->transaction_date ? \Carbon\Carbon::parse($request->transaction_date) : now(),
+                'updated_at' => now(),
             ]);
 
             if (!$transaction) {
