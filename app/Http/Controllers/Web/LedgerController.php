@@ -160,6 +160,7 @@ class LedgerController extends Controller
             'description' => 'nullable|string|max:255',
             'user_id' => 'required|exists:users,id',
             'transaction_type' => 'required|in:lent,borrowed',
+            'transaction_date' => 'nullable|date',
         ]);
 
         try {
@@ -194,6 +195,8 @@ class LedgerController extends Controller
                 'amount' => $amount,
                 'payment_term_id' => $paymentTerm->id,
                 'payment_term_name' => $paymentTerm->name,
+                'created_at' => $request->transaction_date ? \Carbon\Carbon::parse($request->transaction_date) : now(),
+                'updated_at' => now(),
             ]);
 
             if (!$transaction) {
