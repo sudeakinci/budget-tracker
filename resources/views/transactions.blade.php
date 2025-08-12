@@ -100,6 +100,7 @@
     </div>
 
     <!-- total summary cards -->
+     <h1 class="text-2xl font-bold m-3 text-gray-800">Summary</h1>
     <div class="grid grid-cols-2 gap-4">
         <!-- Overall total summary card -->
         @php

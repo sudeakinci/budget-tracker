@@ -28,6 +28,14 @@
                         <input type="text" id="edit-description" name="description" 
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                     </div>
+                    
+                    <div class="mb-4">
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="is_included" id="edit-is-included" value="1" checked
+                                class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">Include in processing</span>
+                        </label>
+                    </div>
                     <!-- footer with buttons -->
                     <div class="flex justify-end items-center space-x-3 border-t border-gray-100 pt-4 mt-4">
                         <button type="button" id="closeEditModal"

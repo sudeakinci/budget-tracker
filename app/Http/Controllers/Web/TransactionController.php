@@ -75,7 +75,8 @@ class TransactionController extends Controller
                 $q->whereIn('name', $receivers);
             });
         }
-
+        
+        // Get all transactions for the display list, including non-included ones
         $transactions = $query->orderByDesc('created_at')->paginate(20);
 
         // calculate monthly statistics for last 3 months
@@ -84,11 +85,12 @@ class TransactionController extends Controller
             'expense' => ['m0' => 0, 'm1' => 0, 'm2' => 0]
         ];
         
-        // get statistics for the last 3 months
+        // get statistics for the last 3 months (only included transactions)
         $monthlyStats = Transaction::where(function ($query) use ($user) {
                 $query->where('owner', $user->id)
                     ->orWhere('user_id', $user->id);
             })
+            ->where('is_included', true)
             ->where('created_at', '>=', now()->subMonths(3))
             ->select(
                 DB::raw('MONTH(created_at) as month'),
@@ -162,6 +164,7 @@ class TransactionController extends Controller
             'payment_term_id' => 'required_if:payment_type,select|nullable|exists:payment_terms,id',
             'payment_term_name' => 'required_if:payment_type,custom|nullable|string|max:255',
             'transaction_type' => 'required|in:income,expense',
+            'is_included' => 'nullable|boolean',
             'transaction_date' => 'nullable|date',
             'created_at' => 'nullable|date',
             'updated_at' => 'nullable|date',
@@ -207,6 +210,7 @@ class TransactionController extends Controller
                 'payment_term_name' => $paymentTermName,
                 'description' => $validatedData['description'] ?? null,
                 'amount' => $amount,
+                'is_included' => $request->has('is_included') ? true : false,
                 'created_at' => $request->transaction_date ? \Carbon\Carbon::parse($request->transaction_date) : now(),
                 'updated_at' => now(),
             ]);
@@ -274,6 +278,7 @@ class TransactionController extends Controller
             'payment_type' => 'required|in:select,custom',
             'payment_term_id' => 'required_if:payment_type,select|nullable|exists:payment_terms,id',
             'payment_term_name' => 'required_if:payment_type,custom|nullable|string|max:255',
+            'is_included' => 'nullable|boolean',
         ]);
 
         try {
@@ -292,6 +297,7 @@ class TransactionController extends Controller
             $id->description = $validatedData['description'];
             $id->payment_term_id = $paymentTermId;
             $id->payment_term_name = $paymentTermName;
+            $id->is_included = $request->has('is_included') ? true : false;
             $id->save();
 
             DB::commit();
@@ -345,6 +351,30 @@ class TransactionController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->withErrors(['message' => 'An error occurred: ' . $e->getMessage()]);
+        }
+    }
+    public function updateInclusion(Request $request, $id)
+    {
+        try {
+            $transaction = Transaction::findOrFail($id);
+            
+            // Check if the user is authorized to update this transaction
+            $user = Auth::user();
+            if ($transaction->owner != $user->id && $transaction->user_id != $user->id) {
+                return response()->json(['error' => 'Unauthorized action'], 403);
+            }
+            
+            // Update the inclusion status
+            $transaction->is_included = $request->input('is_included', false);
+            $transaction->save();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaction inclusion status updated successfully',
+                'is_included' => $transaction->is_included
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 }

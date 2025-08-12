@@ -44,7 +44,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions');
     Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
     Route::put('/transactions/{id}', [TransactionController::class, 'update'])->name('transactions.update');
+    Route::post('/transactions/{id}/update-inclusion', [TransactionController::class, 'updateInclusion'])->name('transactions.update-inclusion');
     Route::delete('/transactions/{id}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
+    Route::post('/transactions/{id}/update-inclusion', [TransactionController::class, 'updateInclusion'])->name('transactions.update-inclusion');
 
     // ledger routes
     Route::get('/ledger', [LedgerController::class, 'index'])->name('ledger');

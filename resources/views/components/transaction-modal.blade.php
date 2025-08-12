@@ -98,6 +98,14 @@
                             @endforeach
                         </select>
                     </div>
+                    
+                    <div class="mt-3">
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="is_included" id="is_included" value="1" checked
+                                class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">Include in processing</span>
+                        </label>
+                    </div>
 
                     <div id="payment_input_container" class="hidden">
                         <input type="text" name="payment_term_name" id="payment_input" required
