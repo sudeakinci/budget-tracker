@@ -27,10 +27,11 @@ class TransactionController extends Controller
 
         $startDate = $request->input('start_date', now()->startOfYear()->format('Y-m-d'));
         $endDate = $request->input('end_date', now()->format('Y-m-d'));
+        $amountType = $request->input('amount_type', 'all');
 
-        $transactions = Transaction::with(['owner', 'user'])
-            ->where(function ($query) use ($user) {
-                $query->where('owner', $user->id)
+        $query = Transaction::with(['owner', 'user'])
+            ->where(function ($q) use ($user) {
+                $q->where('owner', $user->id)
                     ->orWhere('user_id', $user->id);
             })
             ->whereBetween('created_at', [$startDate, $endDate . ' 23:59:59'])
@@ -43,8 +44,30 @@ class TransactionController extends Controller
                            ELSE transactions.amount
                            END as display_amount'
                 )
-            )
-            ->orderByDesc('created_at')->paginate(20);
+            );
+
+        // Apply amount type filter (income/expense)
+        if ($amountType !== 'all') {
+            if ($amountType === 'income') {
+                $query->where(DB::raw(
+                    'CASE 
+                        WHEN transactions.owner = ' . $user->id . ' AND transactions.is_sms = false 
+                        THEN transactions.amount * -1
+                        ELSE transactions.amount
+                        END'
+                ), '<', 0); // Income is negative in display_amount
+            } elseif ($amountType === 'expense') {
+                $query->where(DB::raw(
+                    'CASE 
+                        WHEN transactions.owner = ' . $user->id . ' AND transactions.is_sms = false 
+                        THEN transactions.amount * -1
+                        ELSE transactions.amount
+                        END'
+                ), '>', 0); // Expense is positive in display_amount
+            }
+        }
+
+        $transactions = $query->orderByDesc('created_at')->paginate(20);
 
         // calculate monthly statistics for last 3 months
         $stats = [

@@ -323,6 +323,25 @@
     flex-wrap: wrap;
     animation: fade-in 0.3s ease;
 }
+
+/* Loading indicator styles */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+#loading-overlay {
+    animation: fade-in 0.2s ease;
+    z-index: 9999;
+}
 </style>
 <script>
 let sortState = {
@@ -372,6 +391,21 @@ document.addEventListener('click', function(event) {
 });
 
 function clearFilter(type) {
+    // Special handling for server-side amount filter
+    if (type === 'amount') {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('amount_type')) {
+            // Show loading indicator
+            showLoadingIndicator();
+            
+            // Remove the amount_type parameter and reload
+            urlParams.delete('amount_type');
+            window.location.href = `${window.location.pathname}?${urlParams.toString()}`;
+            return;
+        }
+    }
+    
+    // Continue with local filter clearing
     const popup = document.getElementById('filter-' + type);
     if (popup) {
         popup.querySelectorAll('input').forEach(el => {
@@ -425,6 +459,9 @@ function clearFilter(type) {
 }
 
 function setAmountFilter(element, value) {
+    // Show loading indicator
+    showLoadingIndicator();
+    
     // Update visual state for all buttons
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -434,27 +471,42 @@ function setAmountFilter(element, value) {
     // Update hidden select value
     document.querySelector('#amount-filter-value').value = value;
     
-    // Apply filter
-    filterTable();
+    // Build the URL with filter parameters
+    const currentUrl = new URL(window.location.href);
     
-    // Show active filter indicator
-    const amountFilterIcon = document.querySelector('#amount-filter-icon');
-    if (value !== 'all') {
-        amountFilterIcon.classList.add('text-blue-500', 'font-bold');
-        
-        // Update filter badge
-        const badge = document.getElementById('amount-filter-badge');
-        badge.querySelector('.filter-text').textContent = value === 'income' ? 'Income' : 'Expenses';
-        badge.classList.remove('hidden');
+    // Keep existing parameters but update amount_type
+    const params = new URLSearchParams(currentUrl.search);
+    
+    if (value === 'all') {
+        params.delete('amount_type');
     } else {
-        amountFilterIcon.classList.remove('text-blue-500', 'font-bold');
-        document.getElementById('amount-filter-badge').classList.add('hidden');
+        params.set('amount_type', value);
     }
     
-    // We don't need to auto-close here anymore
-    // Let the document click handler take care of closing when clicking outside
-    
-    updateActiveFiltersVisibility();
+    // Redirect to filtered URL
+    window.location.href = `${currentUrl.pathname}?${params.toString()}`;
+}
+
+// Show loading indicator when filter is applied
+function showLoadingIndicator() {
+    // Create loading overlay if it doesn't exist
+    if (!document.getElementById('loading-overlay')) {
+        const overlay = document.createElement('div');
+        overlay.id = 'loading-overlay';
+        overlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+        overlay.innerHTML = `
+            <div class="bg-white p-4 rounded-lg shadow-lg flex items-center">
+                <svg class="animate-spin h-5 w-5 text-blue-600 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-gray-700">Filtering transactions...</span>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    } else {
+        document.getElementById('loading-overlay').classList.remove('hidden');
+    }
 }
 
 function updateActiveFiltersVisibility() {
@@ -486,7 +538,24 @@ function updateActiveFiltersVisibility() {
 }
 
 function clearAllFilters() {
-    // Clear all filters
+    // Check if we have URL parameters for filters
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('amount_type')) {
+        // Show loading indicator
+        showLoadingIndicator();
+        
+        // Create new URL without filter parameters but keep pagination if present
+        const newParams = new URLSearchParams();
+        if (urlParams.has('page')) {
+            newParams.set('page', urlParams.get('page'));
+        }
+        
+        // Redirect to unfiltered URL
+        window.location.href = `${window.location.pathname}?${newParams.toString()}`;
+        return;
+    }
+
+    // Clear all local filters
     clearFilter('date');
     clearFilter('receiver');
     clearFilter('amount');
@@ -522,7 +591,50 @@ document.addEventListener('DOMContentLoaded', function() {
             event.stopPropagation();
         });
     });
+    
+    // Initialize filters based on URL parameters
+    initializeFiltersFromUrl();
 });
+
+// Initialize filters based on URL parameters
+function initializeFiltersFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Handle amount type filter
+    if (urlParams.has('amount_type')) {
+        const amountType = urlParams.get('amount_type');
+        
+        // Update select value
+        const selectElement = document.querySelector('#amount-filter-value');
+        if (selectElement) {
+            selectElement.value = amountType;
+        }
+        
+        // Update filter button active state
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.value === amountType) {
+                btn.classList.add('active');
+            }
+        });
+        
+        // Update filter icon
+        const amountFilterIcon = document.querySelector('#amount-filter-icon');
+        if (amountFilterIcon && amountType !== 'all') {
+            amountFilterIcon.classList.add('text-blue-500', 'font-bold');
+            
+            // Update filter badge
+            const badge = document.getElementById('amount-filter-badge');
+            if (badge) {
+                badge.querySelector('.filter-text').textContent = amountType === 'income' ? 'Income' : 'Expenses';
+                badge.classList.remove('hidden');
+                
+                // Show the active filters container
+                document.getElementById('active-filters').classList.remove('hidden');
+            }
+        }
+    }
+}
 
 function initializeReceivers() {
     // Get all unique receivers from the table

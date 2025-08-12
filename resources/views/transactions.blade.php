@@ -47,7 +47,7 @@
             class="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none ">New
             Transaction</button>
     </div>
-    
+
     <!-- 3-month summary cards -->
     <div class="grid grid-cols-3 gap-2 mb-4">
         @for ($i = 0; $i < 3; $i++)
@@ -57,24 +57,23 @@
                 $expense = $stats['expense'][$monthKey] ?? 0;
                 $income = $stats['income'][$monthKey] ?? 0;
                 $netAmount = $income - $expense;
-                
+
                 if ($netAmount == 0) {
-                    $icon = 'minus';
+                    $type = 'default';
                     $color = 'gray';
+                    $icon = 'minus';
+                } elseif ($netAmount > 0) {
+                    $type = 'credit'; // yeşil
+                    $color = 'green';
+                    $icon = 'credit';
                 } else {
-                    $icon = $netAmount > 0 ? 'income' : 'expense';
-                    $color = $netAmount > 0 ? 'green' : 'red';
+                    $type = 'debt'; // kırmızı
+                    $color = 'red';
+                    $icon = 'debt';
                 }
             @endphp
-            <x-info-cards
-                title="{{ $monthName }} Overview"
-                type="transaction"
-                :amount="$netAmount"
-                period="{{ $monthName }}"
-                :icon="$icon"
-                :color="$color"
-                subtitle="Net (Income - Expense)"
-            />
+            <x-info-cards :title="$monthName . ' Overview'" :type="$type" :amount="$netAmount" :period="$monthName"
+                :icon="$icon" :color="$color" subtitle="Net (Income - Expense)" />
         @endfor
     </div>
 
@@ -87,7 +86,7 @@
     <!-- transaction edit modal -->
     <x-transaction-edit-modal :paymentTerms="$paymentTerms" />
 
-        <div class="p-4 pl-0 pr-0 mb-4">
+    <div class="p-4 pl-0 pr-0 mb-4">
         @if($transactions->isNotEmpty())
             <x-transactions-table :transactions="$transactions" :show-receiver="true" :row-count="20" />
             <div class="mt-2">
@@ -105,24 +104,23 @@
         $totalExpense = is_array($stats['expense']) ? array_sum($stats['expense']) : 0;
         $totalIncome = is_array($stats['income']) ? array_sum($stats['income']) : 0;
         $netAmount = $totalIncome - $totalExpense;
-        
+
         if ($netAmount == 0) {
-            $icon = 'minus';
+            $type = 'default';
             $color = 'gray';
+            $icon = 'minus';
+        } elseif ($netAmount > 0) {
+            $type = 'credit'; // yeşil
+            $color = 'green';
+            $icon = 'credit';
         } else {
-            $icon = $netAmount > 0 ? 'income' : 'expense';
-            $color = $netAmount > 0 ? 'green' : 'red';
+            $type = 'debt'; // kırmızı
+            $color = 'red';
+            $icon = 'debt';
         }
     @endphp
-    <x-info-cards
-        title="Total Overview"
-        type="transaction"
-        :amount="$netAmount"
-        period="Total"
-        :icon="$icon"
-        :color="$color"
-        subtitle="Net (Income - Expense)"
-    />
+    <x-info-cards title="Total Overview" :type="$type" :amount="$netAmount" period="Total" :icon="$icon" :color="$color"
+        subtitle="Net (Income - Expense)" />
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
