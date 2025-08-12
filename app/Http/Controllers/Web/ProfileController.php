@@ -8,6 +8,7 @@ use App\Models\PaymentTerm;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
+use \App\Models\User;
 
 class ProfileController extends Controller
 {
@@ -93,5 +94,14 @@ class ProfileController extends Controller
         $user->save();
 
         return redirect()->route('profile', ['id' => $user->id])->with('success', 'Balance updated successfully.');
+    }
+
+    public function search(Request $request)
+    {
+        $query = $request->input('q', '');
+        $users = User::where('name', 'like', "%$query%")
+            ->limit(5)
+            ->get(['id', 'name']);
+        return response()->json($users);
     }
 }

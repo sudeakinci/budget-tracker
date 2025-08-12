@@ -64,9 +64,11 @@
                         </select>
                     </div>
 
-                    <div id="user_input_container" class="hidden">
+                    <div id="user_input_container" class="hidden" style="position:relative;">
                         <input type="text" name="custom_user" id="user_input" placeholder="Enter name" required
+                            autocomplete="off"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition shadow-sm hover:border-blue-400">
+                        <div id="user_suggestions" class="absolute left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-10 hidden"></div>
                     </div>
                 </div>
 
@@ -241,5 +243,42 @@
                 .toISOString()
                 .slice(0, 16); // Format: YYYY-MM-DDTHH:MM
         }
+
+        // User search dropdown for custom input
+        userInput.addEventListener('input', function () {
+            const query = userInput.value.trim();
+            const suggestionsBox = document.getElementById('user_suggestions');
+            if (query.length < 1) {
+                suggestionsBox.innerHTML = '';
+                suggestionsBox.classList.add('hidden');
+                return;
+            }
+            fetch(`/users/search?q=${encodeURIComponent(query)}`)
+                .then(res => res.json())
+                .then(users => {
+                    if (users.length === 0) {
+                        suggestionsBox.innerHTML = '';
+                        suggestionsBox.classList.add('hidden');
+                        return;
+                    }
+                    suggestionsBox.innerHTML = users.map(user =>
+                        `<div class='px-4 py-2 cursor-pointer hover:bg-blue-100' data-name='${user.name}'>${user.name}</div>`
+                    ).join('');
+                    suggestionsBox.classList.remove('hidden');
+                });
+        });
+        // Select suggestion
+        document.getElementById('user_suggestions').addEventListener('mousedown', function (e) {
+            if (e.target && e.target.dataset.name) {
+                userInput.value = e.target.dataset.name;
+                this.classList.add('hidden');
+            }
+        });
+        // Hide suggestions on blur
+        userInput.addEventListener('blur', function () {
+            setTimeout(() => {
+                document.getElementById('user_suggestions').classList.add('hidden');
+            }, 150);
+        });
     });
 </script>

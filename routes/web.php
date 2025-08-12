@@ -71,4 +71,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/payment-terms/{paymentTerm}', [PaymentTermController::class, 'update'])->name('payment-terms.update');
     Route::delete('/payment-terms/{paymentTerm}', [PaymentTermController::class, 'destroy'])->name('payment-terms.destroy');
 
+    Route::get('/users/search', [ProfileController::class, 'search'])->name('users.search');
+
 });
