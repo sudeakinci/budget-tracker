@@ -29,6 +29,10 @@ class DashboardController extends Controller
 
         // get the latest 5 transactions for the user
         $transactionsQuery = Transaction::with(['owner', 'user'])
+            ->where(function ($q) use ($user) {
+                $q->where('owner', $user->id)
+                    ->orWhere('user_id', $user->id);
+            })
             ->whereBetween('created_at', [$startDate, $endDate . ' 23:59:59'])
             ->select(
                 'transactions.*',
