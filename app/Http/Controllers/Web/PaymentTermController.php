@@ -23,7 +23,8 @@ class PaymentTermController extends Controller
             
         $amountType = $request->input('amount_type', 'all');
         $receiverFilter = $request->input('receiver');
-        $paymentTermId = $request->input('payment_term_id');
+        $paymentTermId = $request->input('payment_term_id'); // For backward compatibility
+        $paymentTermIds = $request->input('payment_term_ids');
             
         // Get all transactions that use any payment term
         $query = Transaction::with(['paymentTerm', 'user', 'owner'])
@@ -34,7 +35,11 @@ class PaymentTermController extends Controller
             ->whereNotNull('payment_term_id');
             
         // Apply payment term filter if provided
-        if ($paymentTermId) {
+        if ($paymentTermIds) {
+            $ids = explode(',', $paymentTermIds);
+            $query->whereIn('payment_term_id', $ids);
+        } elseif ($paymentTermId) {
+            // For backward compatibility
             $query->where('payment_term_id', $paymentTermId);
         }
             

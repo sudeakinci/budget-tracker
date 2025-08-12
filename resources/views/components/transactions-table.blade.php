@@ -19,6 +19,9 @@
         <div id="receiver-filter-container" class="hidden flex items-center">
             <div id="receiver-filter-badges" class="flex flex-wrap gap-1 items-center ml-1"></div>
         </div>
+        <div id="payment-term-filter-container" class="hidden flex items-center">
+            <div id="payment-term-filter-badges" class="flex flex-wrap gap-1 items-center ml-1"></div>
+        </div>
         <div id="amount-filter-badge" class="inline-flex items-center bg-blue-50 text-blue-700 text-xs font-medium px-2 py-1 rounded-md border border-blue-100">
             <span class="filter-text"></span>
             <button type="button" onclick="clearFilter('amount')" class="ml-1 text-gray-500 hover:text-gray-700">
@@ -557,7 +560,7 @@ function updateActiveFiltersVisibility() {
 function clearAllFilters() {
     // Check if we have URL parameters for filters
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('amount_type')) {
+    if (urlParams.has('amount_type') || urlParams.has('payment_term_ids') || urlParams.has('payment_term_id')) {
         // Show loading indicator
         showLoadingIndicator();
         
@@ -582,6 +585,17 @@ function clearAllFilters() {
     updateSelectedReceiversDisplay();
     document.getElementById('receiver-filter-badges').innerHTML = '';
     document.getElementById('receiver-filter-container').classList.add('hidden');
+    
+    // Clear payment term filters if they exist
+    if (document.getElementById('payment-term-filter-badges')) {
+        document.getElementById('payment-term-filter-badges').innerHTML = '';
+        document.getElementById('payment-term-filter-container').classList.add('hidden');
+        
+        // If clearAllPaymentTermFilters function exists, call it (without reloading page)
+        if (typeof clearPaymentTermsWithoutReload === 'function') {
+            clearPaymentTermsWithoutReload();
+        }
+    }
     
     // Hide the active filters container
     document.getElementById('active-filters').classList.add('hidden');

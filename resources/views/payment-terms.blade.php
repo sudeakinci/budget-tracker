@@ -30,6 +30,32 @@
             input[type=number] {
                 -moz-appearance: textfield;
             }
+
+            /* Filter badge animations */
+            @keyframes fade-in {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            #payment-term-filter-badges>div {
+                animation: fade-in 0.2s ease;
+            }
+
+            /* Active payment term in table */
+            .payment-term-row.active {
+                background-color: rgba(59, 130, 246, 0.05);
+            }
+
+            .filter-button.active {
+                @apply text-blue-800 font-medium;
+            }
         </style>
 
         <h1 class="text-2xl font-bold text-gray-800">Payment Terms</h1>
@@ -42,6 +68,15 @@
         </div>
 
         <x-payment-terms-table :paymentTerms="$paymentTerms" />
+        <div id="active-filters" class="flex flex-wrap items-center gap-1 mb-4 mt-2">
+            <span class="text-sm font-semibold text-gray-700">Filtered by:</span>
+            <div id="payment-term-filter-badges" class="flex flex-wrap gap-1 ml-1"></div>
+            <button id="clear-all-filters" type="button" onclick="clearAllPaymentTermFilters()"
+                class="text-xs px-2 py-1 rounded text-blue-600 hover:bg-blue-50 font-medium ml-auto hidden">
+                Clear all filters
+            </button>
+        </div>
+
     </div>
 
     <!-- transactions section -->
@@ -50,14 +85,7 @@
             <h2 class="text-xl font-semibold text-gray-700">Transactions by Payment Term</h2>
         </div>
 
-        <div id="filter-badge" class="hidden mb-4 mt-2">
-            <div class="inline-flex items-center bg-blue-100 text-blue-800 rounded-full px-3 py-1 text-sm">
-                <span id="filter-text"></span>
-                <button type="button" class="ml-2 text-blue-600 hover:text-blue-800" onclick="clearPaymentTermFilter()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        </div>
+
 
         <div class="p-4 pl-0 pr-0 mb-4">
             @if($transactions->isEmpty())
@@ -79,6 +107,66 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Initialize selected payment terms from URL
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // Support both old and new parameter names for backward compatibility
+            if (urlParams.has('payment_term_ids')) {
+                const paymentTermIds = urlParams.get('payment_term_ids').split(',');
+                const paymentTermRows = document.querySelectorAll('.payment-term-row');
+
+                // Clear existing selected terms
+                selectedPaymentTerms = [];
+
+                // For each ID in the URL, find the corresponding row and add to selected terms
+                paymentTermIds.forEach(id => {
+                    for (const row of paymentTermRows) {
+                        if (row.dataset.paymentTermId === id) {
+                            const paymentTermName = row.querySelector('td:first-child').textContent.trim();
+                            selectedPaymentTerms.push({
+                                id: parseInt(id),
+                                name: paymentTermName
+                            });
+                            break;
+                        }
+                    }
+                });
+
+                // Update the UI
+                updateFilterBadges();
+                highlightActivePaymentTerms();
+
+                // Make sure the active-filters in transactions-table is visible
+                const activeFilters = document.getElementById('active-filters');
+                if (activeFilters) activeFilters.classList.remove('hidden');
+            }
+            // Backwards compatibility with old single payment_term_id parameter
+            else if (urlParams.has('payment_term_id')) {
+                const paymentTermId = urlParams.get('payment_term_id');
+                const paymentTermRows = document.querySelectorAll('.payment-term-row');
+
+                for (const row of paymentTermRows) {
+                    if (row.dataset.paymentTermId === paymentTermId) {
+                        const paymentTermName = row.querySelector('td:first-child').textContent.trim();
+
+                        // Add to selected terms
+                        selectedPaymentTerms.push({
+                            id: parseInt(paymentTermId),
+                            name: paymentTermName
+                        });
+
+                        // Update the UI
+                        updateFilterBadges();
+                        highlightActivePaymentTerms();
+
+                        // Make sure the active-filters in transactions-table is visible
+                        const activeFilters = document.getElementById('active-filters');
+                        if (activeFilters) activeFilters.classList.remove('hidden');
+                        break;
+                    }
+                }
+            }
+
             // Dropdown toggle functionality
             window.toggleDropdown = function (id) {
                 const dropdown = document.getElementById(`dropdown-${id}`);
@@ -100,27 +188,57 @@
             });
         });
 
-        function filterTransactionsByPaymentTerm(paymentTermId, paymentTermName) {
+        // Array to track selected payment term IDs and names
+        let selectedPaymentTerms = [];
+
+        function togglePaymentTermFilter(paymentTermId, paymentTermName) {
+            // Check if this payment term is already selected
+            const index = selectedPaymentTerms.findIndex(term => term.id === paymentTermId);
+
+            if (index === -1) {
+                // Add to selected terms
+                selectedPaymentTerms.push({
+                    id: paymentTermId,
+                    name: paymentTermName
+                });
+            } else {
+                // Remove from selected terms
+                selectedPaymentTerms.splice(index, 1);
+            }
+
+            // Apply the filters
+            applyPaymentTermFilters();
+        }
+
+        function applyPaymentTermFilters() {
             // Show loading indicator
             showLoadingIndicator();
-            
+
             // Build the URL with filter parameters
             const currentUrl = new URL(window.location.href);
             const params = new URLSearchParams(currentUrl.search);
-            
-            // Set payment_term_id filter parameter
-            params.set('payment_term_id', paymentTermId);
-            
-            // Update filter badge
-            const filterBadge = document.getElementById('filter-badge');
-            const filterText = document.getElementById('filter-text');
-            filterBadge.classList.remove('hidden');
-            filterText.textContent = `Filtered by: ${paymentTermName}`;
-            
+
+            if (selectedPaymentTerms.length > 0) {
+                // Set payment_term_ids filter parameter with comma-separated IDs
+                const ids = selectedPaymentTerms.map(term => term.id).join(',');
+                params.set('payment_term_ids', ids);
+            } else {
+                // If no terms selected, remove the parameter
+                params.delete('payment_term_ids');
+            }
+
             // Redirect to filtered URL
             window.location.href = `${currentUrl.pathname}?${params.toString()}`;
         }
-        
+
+        function removePaymentTermFilter(paymentTermId) {
+            // Remove the payment term from selected terms
+            selectedPaymentTerms = selectedPaymentTerms.filter(term => term.id !== paymentTermId);
+
+            // Re-apply the filters
+            applyPaymentTermFilters();
+        }
+
         // Show loading indicator when filter is applied
         function showLoadingIndicator() {
             // Create loading overlay if it doesn't exist
@@ -141,19 +259,99 @@
             }
         }
 
-        function clearPaymentTermFilter() {
+        function clearAllPaymentTermFilters() {
             // Show loading indicator
             showLoadingIndicator();
-            
-            // Remove the payment_term_id parameter and reload
+
+            // Clear all selected payment terms
+            selectedPaymentTerms = [];
+
+            // Remove the payment_term_ids parameter and reload
             const currentUrl = new URL(window.location.href);
             const params = new URLSearchParams(currentUrl.search);
-            
-            // Remove payment_term_id filter
+
+            // Remove payment_term_ids filter
+            params.delete('payment_term_ids');
+            // For backward compatibility
             params.delete('payment_term_id');
-            
+
             // Redirect to filtered URL
             window.location.href = `${currentUrl.pathname}?${params.toString()}`;
+        }
+
+        function updateFilterBadges() {
+            const container = document.getElementById('payment-term-filter-badges');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            selectedPaymentTerms.forEach(term => {
+                const badge = document.createElement('span');
+                badge.className = 'inline-flex items-center bg-blue-50 text-blue-700 text-xs font-medium px-2 py-1 rounded-md border border-blue-100';
+                badge.innerHTML = `
+                    <span>${term.name}</span>
+                    <span class="ml-1 text-blue-400 font-medium"></span>
+                    <button type="button" class="ml-1 text-gray-500 hover:text-gray-700" onclick="removePaymentTermFilter(${term.id})">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                `;
+                container.appendChild(badge);
+            });
+
+            // Get the transaction table's filter container
+            const activeFilters = document.getElementById('active-filters');
+            const paymentTermFilterContainer = document.getElementById('payment-term-filter-container');
+
+            if (selectedPaymentTerms.length > 0) {
+                if (activeFilters) activeFilters.classList.remove('hidden');
+                if (paymentTermFilterContainer) paymentTermFilterContainer.classList.remove('hidden');
+            } else {
+                if (paymentTermFilterContainer) paymentTermFilterContainer.classList.add('hidden');
+
+                // Only hide active filters if no other filters are active
+                if (activeFilters &&
+                    document.querySelectorAll('#date-filter-badge:not(.hidden), #receiver-filter-container:not(.hidden), #amount-filter-badge:not(.hidden)').length === 0) {
+                    activeFilters.classList.add('hidden');
+                }
+
+                // Check if there's a clear all button
+                const clearAllBtn = document.querySelector('#active-filters button[onclick="clearAllFilters()"]');
+                if (clearAllBtn) clearAllBtn.classList.remove('hidden');
+            }
+
+            // Call highlight function after updating badges
+            highlightActivePaymentTerms();
+        }
+
+        function highlightActivePaymentTerms() {
+            // Clear all active states first
+            document.querySelectorAll('.payment-term-row').forEach(row => {
+                row.classList.remove('active');
+                const filterButton = row.querySelector('.filter-button');
+                if (filterButton) {
+                    filterButton.classList.remove('active');
+                }
+            });
+
+            // Highlight selected payment terms
+            selectedPaymentTerms.forEach(term => {
+                const row = document.querySelector(`.payment-term-row[data-payment-term-id="${term.id}"]`);
+                if (row) {
+                    row.classList.add('active');
+                    const filterButton = row.querySelector('.filter-button');
+                    if (filterButton) {
+                        filterButton.classList.add('active');
+                    }
+                }
+            });
+        }
+
+        // Function that can be called from the transactions-table component to clear payment terms without reloading
+        function clearPaymentTermsWithoutReload() {
+            selectedPaymentTerms = [];
+            highlightActivePaymentTerms();
         }
     </script>
 

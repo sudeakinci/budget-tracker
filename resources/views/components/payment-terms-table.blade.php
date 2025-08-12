@@ -26,7 +26,7 @@
                     <td class="py-2 px-4 border-b border-gray-200 text-right">
                         <button type="button" 
                             class="text-blue-600 hover:text-blue-800 focus:outline-none filter-button"
-                            onclick="filterTransactionsByPaymentTerm({{ $paymentTerm->id }}, '{{ $paymentTerm->name }}')">
+                            onclick="togglePaymentTermFilter({{ $paymentTerm->id }}, '{{ $paymentTerm->name }}')">
                             <i class="fas fa-filter"></i> Filter
                         </button>
                     </td>
