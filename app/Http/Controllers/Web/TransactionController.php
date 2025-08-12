@@ -93,8 +93,12 @@ class TransactionController extends Controller
             ->where('is_included', true)
             ->where('created_at', '>=', now()->subMonths(3))
             ->select(
-                DB::raw('MONTH(created_at) as month'),
-                DB::raw('YEAR(created_at) as year'),
+                DB::raw(config('database.default') === 'sqlite' 
+                    ? "CAST(strftime('%m', created_at) AS INTEGER) as month" 
+                    : 'MONTH(created_at) as month'),
+                DB::raw(config('database.default') === 'sqlite' 
+                    ? "CAST(strftime('%Y', created_at) AS INTEGER) as year" 
+                    : 'YEAR(created_at) as year'),
                 DB::raw('SUM(CASE 
                     WHEN (owner = ' . $user->id . ' AND amount > 0) OR (user_id = ' . $user->id . ' AND amount < 0)
                     THEN ABS(amount)
