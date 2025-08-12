@@ -22,13 +22,8 @@
         <div id="payment-term-filter-container" class="hidden flex items-center">
             <div id="payment-term-filter-badges" class="flex flex-wrap gap-1 items-center ml-1"></div>
         </div>
-        <div id="amount-filter-badge" class="inline-flex items-center bg-blue-50 text-blue-700 text-xs font-medium px-2 py-1 rounded-md border border-blue-100">
-            <span class="filter-text"></span>
-            <button type="button" onclick="clearFilter('amount')" class="ml-1 text-gray-500 hover:text-gray-700">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
+        <div id="amount-filter-container" class="hidden flex items-center">
+            <div id="amount-filter-badges" class="flex flex-wrap gap-1 items-center ml-1"></div>
         </div>
         <button type="button" onclick="clearAllFilters()" class="text-xs px-2 py-1 rounded text-blue-600 hover:bg-blue-50 font-medium ml-auto">
             Clear all filters
@@ -458,10 +453,16 @@ function clearFilter(type) {
             const amountFilterIcon = document.querySelector('#amount-filter-icon');
             amountFilterIcon.classList.remove('text-blue-500', 'font-bold');
             
-            // Hide filter badge for amount
-            const badge = document.getElementById(type + '-filter-badge');
-            if (badge) {
-                badge.classList.add('hidden');
+            // Hide filter container for amount
+            const container = document.getElementById(type + '-filter-container');
+            if (container) {
+                container.classList.add('hidden');
+            }
+            
+            // Clear badges
+            const badgesContainer = document.getElementById(type + '-filter-badges');
+            if (badgesContainer) {
+                badgesContainer.innerHTML = '';
             }
         } else if (type === 'receiver') {
             // Show loading indicator
@@ -546,11 +547,18 @@ function updateActiveFiltersVisibility() {
     // Check if any filter is active
     const hasDateFilter = document.querySelector('#filter-date input')?.value;
     const hasReceiverFilter = selectedReceivers.length > 0;
-    const hasAmountFilter = document.querySelector('#amount-filter-value')?.value !== 'all';
+    
+    // Check if the amount filter has an active value
+    const amountValue = document.querySelector('#amount-filter-value')?.value;
+    const hasAmountFilter = amountValue && amountValue !== 'all';
+    
+    // Also check URL parameters for server-side filters
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasAmountTypeParam = urlParams.has('amount_type') && urlParams.get('amount_type') !== 'all';
     
     const activeFiltersContainer = document.getElementById('active-filters');
     
-    if (hasDateFilter || hasReceiverFilter || hasAmountFilter) {
+    if (hasDateFilter || hasReceiverFilter || hasAmountFilter || hasAmountTypeParam) {
         activeFiltersContainer.classList.remove('hidden');
         
         // Update filter labels to be consistent
@@ -560,10 +568,23 @@ function updateActiveFiltersVisibility() {
             document.getElementById('date-filter-badge').classList.add('hidden');
         }
         
-        if (hasAmountFilter) {
-            document.getElementById('amount-filter-badge').classList.remove('hidden');
+        // Check if amount filter is active and update its visibility
+        if (hasAmountFilter || hasAmountTypeParam) {
+            // Get the amount type from URL or select
+            const amountType = urlParams.get('amount_type') || 
+                               (document.querySelector('#amount-filter-value')?.value !== 'all' ? 
+                                document.querySelector('#amount-filter-value').value : null);
+            
+            if (amountType) {
+                // Show and update the amount filter badge
+                updateAmountFilterBadge(amountType);
+            }
         } else {
-            document.getElementById('amount-filter-badge').classList.add('hidden');
+            // Hide the amount filter container if no filter is active
+            const amountFilterContainer = document.getElementById('amount-filter-container');
+            if (amountFilterContainer) {
+                amountFilterContainer.classList.add('hidden');
+            }
         }
     } else {
         activeFiltersContainer.classList.add('hidden');
@@ -598,6 +619,16 @@ function clearAllFilters() {
     updateSelectedReceiversDisplay();
     document.getElementById('receiver-filter-badges').innerHTML = '';
     document.getElementById('receiver-filter-container').classList.add('hidden');
+    
+    // Clear amount filter
+    const amountFilterContainer = document.getElementById('amount-filter-container');
+    if (amountFilterContainer) {
+        amountFilterContainer.classList.add('hidden');
+        const badgesContainer = document.getElementById('amount-filter-badges');
+        if (badgesContainer) {
+            badgesContainer.innerHTML = '';
+        }
+    }
     
     // Clear payment term filters if they exist
     if (document.getElementById('payment-term-filter-badges')) {
@@ -664,17 +695,19 @@ function initializeFiltersFromUrl() {
         
         // Update filter icon
         const amountFilterIcon = document.querySelector('#amount-filter-icon');
-        if (amountFilterIcon && amountType !== 'all') {
+        if (amountFilterIcon && amountType && amountType !== 'all') {
             amountFilterIcon.classList.add('text-blue-500', 'font-bold');
             
-            // Update filter badge
-            const badge = document.getElementById('amount-filter-badge');
-            if (badge) {
-                badge.querySelector('.filter-text').textContent = amountType === 'income' ? 'Income' : 'Expenses';
-                badge.classList.remove('hidden');
-                
-                // Show the active filters container
-                document.getElementById('active-filters').classList.remove('hidden');
+            // Update amount filter badges
+            updateAmountFilterBadge(amountType);
+            
+            // Show the active filters container
+            document.getElementById('active-filters').classList.remove('hidden');
+        } else {
+            // Hide amount filter container
+            const container = document.getElementById('amount-filter-container');
+            if (container) {
+                container.classList.add('hidden');
             }
         }
     }
@@ -848,6 +881,49 @@ function applyReceiverFilter() {
     
     // Stop propagation of click event to prevent immediate closure
     event.stopPropagation();
+}
+
+function updateAmountFilterBadge(amountType) {
+    const container = document.getElementById('amount-filter-badges');
+    if (!container) return;
+    
+    // Clear existing badges
+    container.innerHTML = '';
+    
+    // Create badge element
+    const badge = document.createElement('span');
+    badge.className = 'inline-flex items-center bg-blue-50 text-blue-700 text-xs font-medium px-2 py-1 rounded-md border border-blue-100';
+    
+    // Create badge text
+    const text = document.createElement('span');
+    text.textContent = amountType === 'income' ? 'Income' : 'Expenses';
+    
+    // Create remove button
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'ml-1 text-gray-500 hover:text-gray-700';
+    removeBtn.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+    removeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        
+        // Show loading indicator
+        showLoadingIndicator();
+        
+        // Remove the amount filter and reload
+        const currentUrl = new URL(window.location.href);
+        const params = new URLSearchParams(currentUrl.search);
+        params.delete('amount_type');
+        
+        // Redirect to filtered URL
+        window.location.href = `${currentUrl.pathname}?${params.toString()}`;
+    });
+    
+    // Assemble badge
+    badge.appendChild(text);
+    badge.appendChild(removeBtn);
+    container.appendChild(badge);
+    
+    // Show container
+    document.getElementById('amount-filter-container').classList.remove('hidden');
 }
 
 function updateReceiverFilterBadges() {
