@@ -28,6 +28,7 @@ class TransactionController extends Controller
         $startDate = $request->input('start_date', now()->startOfYear()->format('Y-m-d'));
         $endDate = $request->input('end_date', now()->format('Y-m-d'));
         $amountType = $request->input('amount_type', 'all');
+        $receiverFilter = $request->input('receiver');
 
         $query = Transaction::with(['owner', 'user'])
             ->where(function ($q) use ($user) {
@@ -65,6 +66,14 @@ class TransactionController extends Controller
                         END'
                 ), '>', 0); // Expense is positive in display_amount
             }
+        }
+        
+        // Apply receiver filter if provided
+        if ($receiverFilter) {
+            $receivers = explode(',', $receiverFilter);
+            $query->whereHas('user', function($q) use ($receivers) {
+                $q->whereIn('name', $receivers);
+            });
         }
 
         $transactions = $query->orderByDesc('created_at')->paginate(20);

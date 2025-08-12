@@ -1,208 +1,64 @@
 @props([
     'title' => 'Summary',
-    'type' => 'default', // default, transaction, ledger
+    'type' => 'default', // default, credit, debt
     'amount' => 0,
-    'period' => 'Current', // Current, Monthly, etc.
-    'icon' => 'wallet', // wallet, arrow-up, arrow-down, chart, calendar
-    'color' => 'blue', // blue, green, red, yellow, purple
+    'period' => 'Current',
     'subtitle' => null,
-    'trend' => null, // up, down, stable
-    'trendPercentage' => null,
-    'stats' => null, // For monthly stats display
-    'monthNames' => null, // For month names
-    'compareValue' => null, // To show comparison value
-    'showFooter' => false,
-    'footerLink' => null,
-    'footerText' => null
+    'icon' => 'wallet',
+    'color' => 'blue',
 ])
 
 @php
-    $colors = [
-        'blue' => [
-            'bg' => 'bg-blue-50',
-            'border' => 'border-blue-200',
-            'text' => 'text-blue-700',
-            'icon' => 'text-blue-600',
-            'trend-up' => 'text-green-600',
-            'trend-down' => 'text-red-600',
-            'trend-stable' => 'text-gray-600',
-            'hover' => 'hover:bg-blue-100'
-        ],
-        'green' => [
-            'bg' => 'bg-green-50',
-            'border' => 'border-green-200',
-            'text' => 'text-green-700',
-            'icon' => 'text-green-600',
-            'trend-up' => 'text-green-600',
-            'trend-down' => 'text-red-600',
-            'trend-stable' => 'text-gray-600',
-            'hover' => 'hover:bg-green-100'
-        ],
-        'red' => [
-            'bg' => 'bg-red-50',
-            'border' => 'border-red-200',
-            'text' => 'text-red-700',
-            'icon' => 'text-red-600',
-            'trend-up' => 'text-green-600',
-            'trend-down' => 'text-red-600',
-            'trend-stable' => 'text-gray-600',
-            'hover' => 'hover:bg-red-100'
-        ],
-        'yellow' => [
-            'bg' => 'bg-yellow-50',
-            'border' => 'border-yellow-200',
-            'text' => 'text-yellow-700',
-            'icon' => 'text-yellow-600',
-            'trend-up' => 'text-green-600',
-            'trend-down' => 'text-red-600',
-            'trend-stable' => 'text-gray-600',
-            'hover' => 'hover:bg-yellow-100'
-        ],
-        'purple' => [
-            'bg' => 'bg-purple-50',
-            'border' => 'border-purple-200',
-            'text' => 'text-purple-700',
-            'icon' => 'text-purple-600',
-            'trend-up' => 'text-green-600',
-            'trend-down' => 'text-red-600',
-            'trend-stable' => 'text-gray-600',
-            'hover' => 'hover:bg-purple-100'
-        ],
-        'gray' => [
-            'bg' => 'bg-gray-50',
-            'border' => 'border-gray-200',
-            'text' => 'text-gray-700',
-            'icon' => 'text-gray-500',
-            'trend-up' => 'text-gray-600',
-            'trend-down' => 'text-gray-600',
-            'trend-stable' => 'text-gray-600',
-            'hover' => 'hover:bg-gray-100'
-        ],
+    $gradients = [
+        'blue' => 'bg-gradient-to-br from-blue-400 to-blue-600',
+        'green' => 'bg-gradient-to-br from-green-400 to-green-600',
+        'red' => 'bg-gradient-to-br from-red-400 to-red-600',
+        'gray' => 'bg-gradient-to-br from-gray-400 to-gray-500',
+    ];
+
+    $textColors = [
+        'blue' => 'text-blue-700',
+        'green' => 'text-green-700',
+        'red' => 'text-red-700',
+        'gray' => 'text-gray-700',
     ];
 
     $icons = [
         'wallet' => 'fas fa-wallet',
-        'arrow-up' => 'fas fa-arrow-up',
-        'arrow-down' => 'fas fa-arrow-down',
-        'chart' => 'fas fa-chart-line',
-        'calendar' => 'fas fa-calendar-alt',
         'credit' => 'fas fa-hand-holding-usd',
         'debt' => 'fas fa-file-invoice-dollar',
         'minus' => 'fas fa-minus',
-        'income' => 'fas fa-arrow-up',
-        'expense' => 'fas fa-arrow-down',
     ];
 
-    // determine if we should format as currency
-    $formatAsCurrency = in_array($type, ['transaction', 'ledger', 'balance']);
-    
-    if ($amount == 0) {
+    // Type'a göre otomatik renk ve ikon
+    if ($type === 'credit') {
+        $color = 'green';
+        $icon = 'credit';
+    } elseif ($type === 'debt') {
+        $color = 'red';
+        $icon = 'debt';
+    } elseif ($amount == 0) {
         $color = 'gray';
         $icon = 'minus';
     }
 @endphp
 
-<div class="col-xl-3 col-md-6 mb-2 {{ $attributes->get('class') }}">
-    <div class="card rounded-lg shadow-sm border {{ $colors[$color]['border'] }} h-full transition-shadow duration-300 hover:shadow-md" style="min-height:50px;">
-        <div class="card-body p-1" style="min-height:40px;">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="d-flex flex-row align-items-center">
-                    <div class="align-self-center">
-                        <h2 class="h2 mb-0 me-1 font-bold {{ $colors[$color]['text'] }}" style="font-size:0.9rem;">
-                            @if($formatAsCurrency)
-                                ₺{{ number_format($amount, 2) }}
-                            @else
-                                {{ $amount }}
-                            @endif
-                        </h2>
-                    </div>
-                    <div class="ms-2">
-                        <h4 class="text-sm font-semibold text-gray-800 mb-0">{{ $title }}</h4>
-                        <p class="mb-0 text-xs text-gray-600">{{ $period }}</p>
-                        
-                        @if($subtitle)
-                            <p class="text-xs text-gray-500 mb-0" style="font-size:0.65rem;">{{ $subtitle }}</p>
-                        @endif
-                        
-                        @if($trend)
-                            <div class="flex items-center">
-                                @if($trend === 'up')
-                                    <i class="fas fa-arrow-up {{ $colors[$color]['trend-up'] }} text-xs mr-1" style="font-size:0.6rem;"></i>
-                                @elseif($trend === 'down')
-                                    <i class="fas fa-arrow-down {{ $colors[$color]['trend-down'] }} text-xs mr-1" style="font-size:0.6rem;"></i>
-                                @else
-                                    <i class="fas fa-minus {{ $colors[$color]['trend-stable'] }} text-xs mr-1" style="font-size:0.6rem;"></i>
-                                @endif
-                                
-                                @if($trendPercentage)
-                                    <span style="font-size:0.6rem;" class="{{ $trend === 'up' ? $colors[$color]['trend-up'] : ($trend === 'down' ? $colors[$color]['trend-down'] : $colors[$color]['trend-stable']) }}">
-                                        {{ $trendPercentage }}%
-                                    </span>
-                                @endif
-                            </div>
-                        @endif
-                    </div>
-                </div>
-                <div class="align-self-center {{ $colors[$color]['bg'] }} p-1 rounded-full">
-                    <i class="{{ $icons[$icon] ?? $icon }} {{ $colors[$color]['icon'] }} fa-sm"></i>
-                </div>
-            </div>
-            
-            @if(($type === 'ledger' || $type === 'transaction') && $stats && $monthNames)
-            <div class="mt-2">
-                <div class="text-xs font-semibold mb-1">Last 3 Months</div>
-                <div class="grid grid-cols-3 gap-1">
-                    @foreach(array_keys($monthNames) as $key)
-                        @php
-                            $monthName = $monthNames[$key];
-                            $value = isset($stats[$key]) ? $stats[$key] : 0;
-                            $isPositive = $value >= 0;
-                            
-                            // set colors based on card type and value
-                            if ($type === 'transaction' && $title === 'Total Expenses') {
-                                // for expenses, lower is better
-                                $bgColor = 'bg-gray-100';
-                                $textColor = 'text-gray-700';
-                            } elseif ($type === 'transaction' && $title === 'Total Income') {
-                                // for income, higher is better
-                                $bgColor = 'bg-gray-100';
-                                $textColor = 'text-gray-700';
-                            } else {
-                                // for net values or ledger cards
-                                $bgColor = $isPositive ? 'bg-green-100' : 'bg-red-100';
-                                $textColor = $isPositive ? 'text-green-700' : 'text-red-700';
-                            }
-                        @endphp
-                        <div class="p-1 {{ $bgColor }} rounded">
-                            <div class="text-xs text-gray-600" style="font-size:0.6rem;">{{ $monthName }}</div>
-                            <div class="font-bold {{ $textColor }}" style="font-size:0.7rem;">
-                                ₺{{ number_format($value, 2) }}
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-            @endif
-            
-            @if($compareValue !== null)
-            <div class="mt-2 pt-1 border-t border-gray-200">
-                <div class="flex justify-between text-xs">
-                    <span class="text-gray-600">Compared to:</span>
-                    <span class="font-semibold {{ $compareValue >= 0 ? 'text-green-600' : 'text-red-600' }}">
-                        {{ $compareValue >= 0 ? '+' : '' }}₺{{ number_format($compareValue, 2) }}
-                    </span>
-                </div>
-            </div>
-            @endif
-        </div>
+<div class="col-xl-3 col-md-6 mb-4">
+    <div class="flex justify-between items-center rounded-2xl p-5 border border-white/30 shadow-lg
+                backdrop-blur-lg bg-white/60 transition-all duration-300 hover:scale-[1.03] hover:shadow-xl">
         
-        @if($showFooter && $footerLink && $footerText)
-        <div class="card-footer p-1 bg-gray-50 border-t border-gray-200">
-            <a href="{{ $footerLink }}" class="text-xs font-medium {{ $colors[$color]['text'] }} hover:underline flex items-center justify-end">
-                {{ $footerText }}
-                <i class="fas fa-chevron-right ml-1 text-xs"></i>
-            </a>
+        <!-- Sol -->
+        <div>
+            <h2 class="text-2xl font-bold {{ $textColors[$color] }}">
+                ${{ number_format($amount, 2) }}
+            </h2>
+            <h4 class="text-sm font-semibold text-gray-800 mt-1">{{ $title }}</h4>
+            <p class="text-xs text-gray-500 mt-0.5">{{ $subtitle ?? $period }}</p>
         </div>
-        @endif
+
+        <!-- Sağ ikon -->
+        <div class="{{ $gradients[$color] }} p-4 rounded-xl flex items-center justify-center shadow-md">
+            <i class="{{ $icons[$icon] ?? $icon }} text-white fa-lg"></i>
+        </div>
     </div>
 </div>

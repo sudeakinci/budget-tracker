@@ -434,10 +434,13 @@ function clearFilter(type) {
                 badge.classList.add('hidden');
             }
         } else if (type === 'receiver') {
-            // Clear selected receivers
-            selectedReceivers = [];
-            updateSelectedReceiversDisplay();
-            updateReceiverFilterBadges();
+            // Show loading indicator
+            showLoadingIndicator();
+            
+            // Remove the receiver parameter and reload
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.delete('receiver');
+            window.location.href = `${window.location.pathname}?${urlParams.toString()}`;
             document.getElementById('receiver-filter-container').classList.add('hidden');
         } else if (type === 'date') {
             // Hide filter badge for date
@@ -634,6 +637,22 @@ function initializeFiltersFromUrl() {
             }
         }
     }
+    
+    // Handle receiver filter
+    if (urlParams.has('receiver')) {
+        const receiverParam = urlParams.get('receiver');
+        selectedReceivers = receiverParam.split(',');
+        
+        // Update receiver filter icon
+        const receiverFilterIcon = document.querySelector('#receiver-filter-icon');
+        if (receiverFilterIcon && selectedReceivers.length > 0) {
+            receiverFilterIcon.classList.add('text-blue-500', 'font-bold');
+            
+            // Show active filters container and update badges
+            document.getElementById('active-filters').classList.remove('hidden');
+            updateReceiverFilterBadges();
+        }
+    }
 }
 
 function initializeReceivers() {
@@ -725,8 +744,26 @@ function updateSelectedReceiversDisplay() {
         removeBtn.innerHTML = '&times;';
         removeBtn.addEventListener('click', function(e) {
             e.stopPropagation();
-            toggleReceiver(receiver, false);
-            updateReceiverOptions();
+            
+            // Show loading indicator
+            showLoadingIndicator();
+            
+            // Remove this receiver from the filter and reload
+            const currentUrl = new URL(window.location.href);
+            const params = new URLSearchParams(currentUrl.search);
+            
+            // Get current receivers and remove this one
+            const receivers = params.get('receiver') ? params.get('receiver').split(',') : [];
+            const updatedReceivers = receivers.filter(r => r !== receiver);
+            
+            if (updatedReceivers.length === 0) {
+                params.delete('receiver');
+            } else {
+                params.set('receiver', updatedReceivers.join(','));
+            }
+            
+            // Redirect to filtered URL
+            window.location.href = `${currentUrl.pathname}?${params.toString()}`;
         });
         
         badge.appendChild(text);
@@ -747,12 +784,26 @@ function selectAllReceivers() {
 }
 
 function applyReceiverFilter() {
-    // We don't need to manually hide the filter popup
-    // Just apply the filter and let the document click handler close it when appropriate
+    // Show loading indicator
+    showLoadingIndicator();
     
     // Update UI to show applied filters
     updateReceiverFilterBadges();
-    filterTable();
+    
+    // Build the URL with filter parameters
+    const currentUrl = new URL(window.location.href);
+    
+    // Keep existing parameters but update receiver
+    const params = new URLSearchParams(currentUrl.search);
+    
+    if (selectedReceivers.length === 0) {
+        params.delete('receiver');
+    } else {
+        params.set('receiver', selectedReceivers.join(','));
+    }
+    
+    // Redirect to filtered URL
+    window.location.href = `${currentUrl.pathname}?${params.toString()}`;
     
     // Stop propagation of click event to prevent immediate closure
     event.stopPropagation();
@@ -764,10 +815,21 @@ function updateReceiverFilterBadges() {
     
     if (selectedReceivers.length === 0) {
         document.getElementById('receiver-filter-container').classList.add('hidden');
+        // Reset the filter icon state
+        const receiverFilterIcon = document.querySelector('#receiver-filter-icon');
+        if (receiverFilterIcon) {
+            receiverFilterIcon.classList.remove('text-blue-500', 'font-bold');
+        }
         return;
     }
     
     document.getElementById('receiver-filter-container').classList.remove('hidden');
+    
+    // Update the filter icon state to show it's active
+    const receiverFilterIcon = document.querySelector('#receiver-filter-icon');
+    if (receiverFilterIcon) {
+        receiverFilterIcon.classList.add('text-blue-500', 'font-bold');
+    }
     
     selectedReceivers.forEach(receiver => {
         const badge = document.createElement('span');
@@ -781,9 +843,26 @@ function updateReceiverFilterBadges() {
         removeBtn.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
         removeBtn.addEventListener('click', function(e) {
             e.stopPropagation();
-            toggleReceiver(receiver, false);
-            updateReceiverOptions();
-            updateReceiverFilterBadges();
+            
+            // Show loading indicator
+            showLoadingIndicator();
+            
+            // Remove this receiver from the filter and reload
+            const currentUrl = new URL(window.location.href);
+            const params = new URLSearchParams(currentUrl.search);
+            
+            // Get current receivers and remove this one
+            const receivers = params.get('receiver') ? params.get('receiver').split(',') : [];
+            const updatedReceivers = receivers.filter(r => r !== receiver);
+            
+            if (updatedReceivers.length === 0) {
+                params.delete('receiver');
+            } else {
+                params.set('receiver', updatedReceivers.join(','));
+            }
+            
+            // Redirect to filtered URL
+            window.location.href = `${currentUrl.pathname}?${params.toString()}`;
             filterTable();
         });
         
@@ -824,11 +903,7 @@ function filterTable() {
     rows.forEach(row => {
         let visible = true;
         
-        // receiver filter - check if row's receiver is in the selected receivers list
-        if (selectedReceivers.length > 0) {
-            const rowReceiver = row.getAttribute('data-receiver');
-            if (!selectedReceivers.includes(rowReceiver)) visible = false;
-        }
+        // Receiver filter is now handled server-side, no need to filter client-side
         
         // date filter
         if (dateValue && row.getAttribute('data-date') !== dateValue) visible = false;
