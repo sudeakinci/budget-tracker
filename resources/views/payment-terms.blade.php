@@ -68,31 +68,17 @@
         </div>
 
         <x-payment-terms-table :paymentTerms="$paymentTerms" />
-        <div id="active-filters" class="flex flex-wrap items-center gap-1 mb-4 mt-2">
-            <span class="text-sm font-semibold text-gray-700">Filtered by:</span>
-            <div id="payment-term-filter-badges" class="flex flex-wrap gap-1 ml-1"></div>
-            <button id="clear-all-filters" type="button" onclick="clearAllPaymentTermFilters()"
-                class="text-xs px-2 py-1 rounded text-blue-600 hover:bg-blue-50 font-medium ml-auto hidden">
-                Clear all filters
-            </button>
-        </div>
-
     </div>
 
     <!-- transactions section -->
     <div>
-        <div class="flex justify-between items-center mb-4">
+        <div class="flex justify-between items-center">
             <h2 class="text-xl font-semibold text-gray-700">Transactions by Payment Term</h2>
         </div>
 
-
-
         <div class="p-4 pl-0 pr-0 mb-4">
-            @if($transactions->isEmpty())
-                <p class="mt-4 text-gray-600">No transaction found.</p>
-            @else
-                <x-transactions-table :transactions="$transactions" :showReceiver="true" :showPaymentMethod="true"
-                    :row-count="20" />
+            <x-transactions-table :transactions="$transactions" :show-receiver="true" :showPaymentMethod="true" :row-count="20" />
+            @if($transactions->isNotEmpty())
                 <div class="mt-2">
                     {{ $transactions->appends(request()->query())->links() }}
                 </div>
