@@ -152,6 +152,13 @@
             </tr>
         </thead>
         <tbody>
+            @if($transactions->isEmpty())
+                <tr class="empty-row">
+                    <td colspan="{{ $showReceiver ? '5' : '4' }}" class="py-4 text-center text-gray-500">
+                        Transactions not found
+                    </td>
+                </tr>
+            @endif
             @foreach($transactions as $transaction)
                 <tr class="hover:bg-blue-50 {{ $loop->even ? 'bg-gray-50' : '' }} transaction-row"
                     data-payment-method="{{ $transaction->payment_term_name ?: '-' }}"
@@ -1002,25 +1009,30 @@ function sortTable(type, direction) {
 }
 
 function updateEmptyRows() {
-    const visibleRows = document.querySelectorAll('tbody tr:not(.hidden):not(.empty-row)').length;
-    const emptyRow = document.querySelector('.empty-row');
+    const visibleRows = document.querySelectorAll('tbody tr.transaction-row:not(.hidden)').length;
+    let emptyRow = document.querySelector('.empty-row');
+    const tbody = document.querySelector('tbody');
+    const colSpan = document.querySelector('thead tr').children.length;
     
     if (visibleRows === 0) {
         if (!emptyRow) {
-            const tbody = document.querySelector('tbody');
-            const colSpan = document.querySelector('thead tr').children.length;
+            // Create new empty row if it doesn't exist
             const tr = document.createElement('tr');
             tr.className = 'empty-row';
             const td = document.createElement('td');
             td.colSpan = colSpan;
             td.className = 'py-4 text-center text-gray-500';
-            td.innerText = 'No transactions found matching your filters';
+            td.innerText = 'Transactions not found';
             tr.appendChild(td);
             tbody.appendChild(tr);
         } else {
+            // Show existing empty row and ensure it's at the top
             emptyRow.classList.remove('hidden');
+            // Make sure colspan is correct (in case table structure changed)
+            emptyRow.querySelector('td').colSpan = colSpan;
         }
     } else if (emptyRow) {
+        // Hide the empty row when there are visible transactions
         emptyRow.classList.add('hidden');
     }
 }

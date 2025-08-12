@@ -67,11 +67,9 @@
     <!-- transaction edit modal -->
     <x-transaction-edit-modal :paymentTerms="$paymentTerms" />
 
-    <div class="p-4 pl-0 pr-0 mb-4">
-        @if($transactions->isEmpty())
-            <p class="mt-4 text-gray-600">No ledger entries found.</p>
-        @else
-            <x-transactions-table :transactions="$transactions" :show-receiver="true" :row-count="20" :is-ledger="true" />
+        <div class="p-4 pl-0 pr-0 mb-4">
+        <x-transactions-table :transactions="$transactions" :show-receiver="true" :row-count="20" :is-ledger="true" />
+        @if($transactions->isNotEmpty())
             <div class="mt-2">
                 {{ $transactions->appends(request()->query())->links() }}
             </div>

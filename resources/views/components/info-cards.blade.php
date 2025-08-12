@@ -50,7 +50,7 @@
         <!-- Sol -->
         <div>
             <h2 class="text-2xl font-bold {{ $textColors[$color] }}">
-                ${{ number_format($amount, 2) }}
+                ₺{{ number_format($amount, 2) }}
             </h2>
             <h4 class="text-sm font-semibold text-gray-800 mt-1">{{ $title }}</h4>
             <p class="text-xs text-gray-500 mt-0.5">{{ $subtitle ?? $period }}</p>
