@@ -7,8 +7,9 @@
     <meta name="description" content="Money Transfer Application">
     <meta name="author" content="Your Company">
     <title>{{ $title ?? config('app.name') }}</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <!-- Stylesheet links -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
