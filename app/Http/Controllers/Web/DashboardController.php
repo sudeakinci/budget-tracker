@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use \App\Models\Transaction;
 use \App\Models\User;
 use \App\Models\PaymentTerm;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
@@ -16,27 +17,49 @@ class DashboardController extends Controller
         $this->middleware = ['auth'];
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
 
+        $startDate = $request->input('start_date', now()->startOfYear()->format('Y-m-d'));
+        $endDate = $request->input('end_date', now()->format('Y-m-d'));
+
+        $amountType = $request->input('amount_type', 'all');
+        $receiverFilter = $request->input('receiver');
+
         // get the latest 5 transactions for the user
-        $transactions = Transaction::with(['owner', 'user'])
-            ->where(function ($query) use ($user) {
-                $query->where('owner', $user->id)
-                    ->orWhere('user_id', $user->id);
-            })
+        $transactionsQuery = Transaction::with(['owner', 'user'])
+            ->whereBetween('created_at', [$startDate, $endDate . ' 23:59:59'])
             ->select(
                 'transactions.*',
                 DB::raw(
                     'CASE 
-                            WHEN transactions.owner = ' . $user->id . ' AND transactions.is_sms = false
-                            THEN transactions.amount * -1
-                            ELSE transactions.amount
-                            END as display_amount'
+                           WHEN transactions.owner = ' . $user->id . ' AND transactions.is_sms = false 
+                           THEN transactions.amount * -1
+                           ELSE transactions.amount
+                           END as display_amount'
                 )
-            )
-            ->orderByDesc('created_at')
+            );
+
+        // Apply amount type filter (income/expense)
+        if ($amountType !== 'all') {
+            if ($amountType === 'income') {
+                $transactionsQuery->having('display_amount', '<', 0); // Income is negative in display_amount
+            } elseif ($amountType === 'expense') {
+                $transactionsQuery->having('display_amount', '>', 0); // Expense is positive in display_amount
+            }
+        }
+
+        // Apply receiver filter if provided
+        if ($receiverFilter) {
+            $receivers = explode(',', $receiverFilter);
+            $transactionsQuery->whereHas('user', function ($q) use ($receivers) {
+                $q->whereIn('name', $receivers);
+            });
+        }
+
+
+        $transactions = $transactionsQuery->orderByDesc('created_at')
             ->take(5)
             ->get();
 

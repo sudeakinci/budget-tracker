@@ -6,7 +6,7 @@
 
 <div class="overflow-x-visible">
     <!-- filter badges -->
-    <div id="active-filters" class="mb-3 flex flex-wrap items-center gap-1 hidden">
+    <div id="active-filters" class="my-3 px-4 flex flex-wrap items-center gap-1 hidden">
         <span class="text-sm font-semibold text-gray-700">Filtered by:</span>
         <div id="date-filter-badge" class="filter-badge hidden">
             <span class="filter-text"></span>
