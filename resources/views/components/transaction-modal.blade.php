@@ -177,6 +177,12 @@
                 userInputContainer.classList.add('hidden');
                 userInput.removeAttribute('required');
                 userSelect.setAttribute('required', '');
+                
+                // Remove any selected_user_id field when switching to select mode
+                const existingHiddenInput = document.getElementById('selected_user_id');
+                if (existingHiddenInput) {
+                    existingHiddenInput.remove();
+                }
             }
         });
 
@@ -186,6 +192,14 @@
                 userInputContainer.classList.remove('hidden');
                 userSelect.removeAttribute('required');
                 userInput.setAttribute('required', '');
+            }
+        });
+        
+        // Clear any selected user ID when typing manually
+        userInput.addEventListener('keydown', function() {
+            const existingHiddenInput = document.getElementById('selected_user_id');
+            if (existingHiddenInput) {
+                existingHiddenInput.remove();
             }
         });
 
@@ -262,7 +276,7 @@
                         return;
                     }
                     suggestionsBox.innerHTML = users.map(user =>
-                        `<div class='px-4 py-2 cursor-pointer hover:bg-blue-100' data-name='${user.name}'>${user.name}</div>`
+                        `<div class='px-4 py-2 cursor-pointer hover:bg-blue-100' data-name='${user.name}' data-id='${user.id}'>${user.name}</div>`
                     ).join('');
                     suggestionsBox.classList.remove('hidden');
                 });
@@ -271,6 +285,18 @@
         document.getElementById('user_suggestions').addEventListener('mousedown', function (e) {
             if (e.target && e.target.dataset.name) {
                 userInput.value = e.target.dataset.name;
+                // Create a hidden input field to store the user ID when selecting from dropdown
+                const existingHiddenInput = document.getElementById('selected_user_id');
+                if (existingHiddenInput) {
+                    existingHiddenInput.value = e.target.dataset.id;
+                } else {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.id = 'selected_user_id';
+                    hiddenInput.name = 'selected_user_id';
+                    hiddenInput.value = e.target.dataset.id;
+                    form.appendChild(hiddenInput);
+                }
                 this.classList.add('hidden');
             }
         });

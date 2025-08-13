@@ -165,6 +165,7 @@ class TransactionController extends Controller
             'receiver_type' => 'required|in:select,custom',
             'payment_type' => 'required|in:select,custom',
             'user_id' => 'nullable|exists:users,id',
+            'selected_user_id' => 'nullable|exists:users,id',
             'payment_term_id' => 'required_if:payment_type,select|nullable|exists:payment_terms,id',
             'payment_term_name' => 'required_if:payment_type,custom|nullable|string|max:255',
             'transaction_type' => 'required|in:income,expense',
@@ -207,9 +208,18 @@ class TransactionController extends Controller
                 $paymentTermName = $paymentTerm->name;
             }
 
+            // determine the user_id - use selected_user_id from dropdown if available
+            $userId = null;
+            if ($validatedData['receiver_type'] === 'select') {
+                $userId = $validatedData['user_id'] ?? null;
+            } else if (isset($validatedData['selected_user_id'])) {
+                // use the ID from the autocomplete dropdown
+                $userId = $validatedData['selected_user_id'];
+            }
+            
             $transaction = Transaction::create([
                 'owner' => $owner->id,
-                'user_id' => $validatedData['user_id'] ?? null,
+                'user_id' => $userId,
                 'payment_term_id' => $paymentTermId,
                 'payment_term_name' => $paymentTermName,
                 'description' => $validatedData['description'] ?? null,
@@ -229,8 +239,8 @@ class TransactionController extends Controller
             $owner->save();
 
             // if a receiver user is specified, update their balance
-            if (isset($validatedData['user_id'])) {
-                $receiver = User::find($validatedData['user_id']);
+            if (isset($userId) && $userId) {
+                $receiver = User::find($userId);
                 $receiver->balance -= $amount;
                 $receiver->save();
             }
