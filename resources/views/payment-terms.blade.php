@@ -85,8 +85,6 @@
             @endif
         </div>
 
-        <x-transaction-details-modal />
-
         <x-transaction-edit-modal :paymentTerms="$paymentTerms" />
 
     </div>

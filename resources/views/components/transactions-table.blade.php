@@ -200,22 +200,6 @@
                             <div id="dropdown-{{ $transaction->id }}"
                                 class="dropdown-menu hidden absolute w-32 bg-white bottom-0 ml-5 rounded-md shadow-lg z-40 overflow-visible max-h-48 overflow-y-auto">
                                 <div class="py-1">
-                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onclick="event.preventDefault(); showTransactionDetails({{ $transaction->id }}, 
-                                '{{ $transaction->created_at->format('d.m.Y H:i') }}', 
-                                '{{ $transaction->description ?: 'No description' }}', 
-                                '{{ number_format($transaction->display_amount, 2) }} ₺', 
-                                '{{ optional($transaction->user)->name ?: '-' }}',
-                                '{{ $transaction->payment_term_name }}')">
-                                        <span class="flex items-center">
-                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
-                                                </path>
-                                            </svg>
-                                            Info
-                                        </span>
-                                    </a>
                                     <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onclick="event.preventDefault(); editTransaction({{ $transaction->id }}, 
                                 '{{ $transaction->description }}', 
                                 '{{ $transaction->payment_term_name }}',

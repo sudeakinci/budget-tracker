@@ -31,7 +31,7 @@
                     first transaction</a>
             </div>
         @else
-            <x-transactions-table :transactions="$transactions" :show-receiver="true" :row-count="5" />
+            <x-transactions-table :transactions="$transactions" :show-receiver="true" :row-count="5" :showPaymentMethod="true" />
             <div class="px-6 py-3 bg-gray-50 text-right">
                 <a href="{{ route('transactions') }}" class="text-blue-600 hover:underline text-sm font-medium">
                     View All Transactions
@@ -39,9 +39,6 @@
             </div>
         @endif
     </div>
-
-    <!-- transaction details modal -->
-    <x-transaction-details-modal />
 
     <!-- quick Links -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
