@@ -12,17 +12,13 @@ Route::get('/doc', function () {
     return view('doc');
 });
 
-Route::get("/", function () {
-    return view('welcome');
-});
-
 Route::get('/', function () {
-    return Auth::check() ? redirect('/dashboard') : view('welcome');
+    return Auth::check() ? redirect('/dashboard') : view('/login');
 });
 
 //authentication routes
 Route::controller(AuthController::class)->group(function () {
-    Route::get('/login', 'showLoginForm')->name('login');
+    Route::get('/', 'showLoginForm')->name('login');
     Route::post('/login', 'login')->middleware('throttle:5,1'); // 5 attempts per minute
     Route::get('/register', 'showRegistrationForm')->name('register');
     Route::post('/register', 'register')->middleware('throttle:3,1'); // 3 attempts per minute
