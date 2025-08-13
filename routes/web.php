@@ -19,6 +19,7 @@ Route::get('/', function () {
 //authentication routes
 Route::controller(AuthController::class)->group(function () {
     Route::get('/', 'showLoginForm')->name('login');
+    Route::get('/login', 'showLoginForm')->name('login.form');
     Route::post('/login', 'login')->middleware('throttle:5,1'); // 5 attempts per minute
     Route::get('/register', 'showRegistrationForm')->name('register');
     Route::post('/register', 'register')->middleware('throttle:3,1'); // 3 attempts per minute
@@ -52,7 +53,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // ledger routes
     Route::get('/ledger', [LedgerController::class, 'index'])->name('ledger');
-    
+
     // payment terms routes
     Route::get('/payment-terms', [PaymentTermController::class, 'index'])->name('payment-terms');
     Route::post('/ledger', [LedgerController::class, 'store'])->name('ledger.store');
