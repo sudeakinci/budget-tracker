@@ -4,6 +4,8 @@
     'showPaymentMethod' => false,
 ])
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
 <div class="overflow-x-visible">
     <!-- filter badges -->
     <div id="active-filters" class="my-3 px-4 flex flex-wrap items-center gap-1 hidden">
@@ -42,10 +44,11 @@
                             </svg>
                         </span>
                     </span>
-                    <div id="filter-date" class="absolute left-0 top-full mt-2 bg-white border border-blue-200 rounded-xl shadow-2xl p-4 z-50 hidden min-w-[180px] animate-fade-in">
-                        <input type="date" class="border border-blue-300 rounded-lg px-3 py-2 text-sm w-full focus:ring-2 focus:ring-blue-400 focus:outline-none mb-2" oninput="filterTable()">
-                        <div class="flex justify-end">
-                            <button type="button" class="text-xs px-2 py-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-700" onclick="clearFilter('date')">Clear</button>
+                    <div id="filter-date" class="absolute left-0 top-full mt-2 bg-white border border-blue-200 rounded-xl shadow-2xl p-4 z-50 hidden min-w-[260px] animate-fade-in">
+                        <div id="flatpickr-calendar"></div>
+                        <div class="flex justify-between gap-2 mt-3">
+                            <button type="button" class="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700" onclick="clearFlatpickrDate()">Clear</button>
+                            <button type="button" class="text-xs px-2 py-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-700" onclick="applyFlatpickrDate()">Apply</button>
                         </div>
                     </div>
                 </th>
@@ -352,11 +355,43 @@
     z-index: 9999;
 }
 </style>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
 <script>
 let sortState = {
     date: 'desc', // default sort: newest first
     amount: 'desc' // default sort: high to low
 };
+
+let flatpickrInstance = flatpickr("#flatpickr-calendar", {
+    mode: "range",
+    inline: true,
+    dateFormat: "Y-m-d",
+    onChange: function(selectedDates, dateStr, instance) {
+        window.selectedFlatpickrRange = dateStr;
+    },
+    onReady: function(selectedDates, dateStr, instance) {
+        instance.calendarContainer.classList.add('custom-flatpickr-popup');
+    }
+});
+window.selectedFlatpickrRange = '';
+
+function clearFlatpickrDate() {
+    flatpickrInstance.clear();
+    window.selectedFlatpickrRange = '';
+    filterTable();
+    const badge = document.getElementById('date-filter-badge');
+    if (badge) badge.classList.add('hidden');
+}
+
+function applyFlatpickrDate() {
+    filterTable();
+    const badge = document.getElementById('date-filter-badge');
+    if (badge) badge.classList.remove('hidden');
+    document.getElementById('filter-date').classList.add('hidden');
+    currentOpenFilter = null;
+}
 
 // Track current open filter
 let currentOpenFilter = null;
@@ -974,66 +1009,64 @@ function updateReceiverFilterBadges() {
 }
 
 function filterTable() {
-    // date
-    const dateInput = document.querySelector('#filter-date input');
-    const dateValue = dateInput ? dateInput.value : '';
-    
-    // amount type filter (income/expense)
-    const amountTypeSelect = document.querySelector('#amount-filter-value');
-    const amountType = amountTypeSelect ? amountTypeSelect.value : 'all';
-    
-    // amount value filter (if present)
-    const amountInput = document.querySelector('#filter-amount input[type="number"]');
-    const amountOperator = document.querySelector('#filter-amount select[data-operator]') ? 
-                          document.querySelector('#filter-amount select[data-operator]').value : 'gt';
-    const amountValue = amountInput && amountInput.value !== '' ? parseFloat(amountInput.value) : null;
-    
-    // Update filter badges
-    if (dateValue) {
-        const formattedDate = new Date(dateValue).toLocaleDateString();
-        document.querySelector('#date-filter-badge .filter-text').textContent = `Date: ${formattedDate}`;
-        document.getElementById('date-filter-badge').classList.remove('hidden');
-    } else {
-        document.getElementById('date-filter-badge').classList.add('hidden');
-    }
-    
-    updateActiveFiltersVisibility();
+      const dateInput = document.querySelector('#filter-date');
+      const dateValue = window.selectedFlatpickrRange || '';
 
-    // rows
-    const rows = Array.from(document.querySelectorAll('.transaction-row'));
-    rows.forEach(row => {
-        let visible = true;
-        
-        // Receiver filter is now handled server-side, no need to filter client-side
-        
-        // date filter
-        if (dateValue && row.getAttribute('data-date') !== dateValue) visible = false;
-        
-        // amount type filter (income/expense)
-        if (amountType !== 'all') {
-            const rowAmount = parseFloat(row.getAttribute('data-amount'));
-            if (amountType === 'income' && rowAmount >= 0) visible = false;
-            if (amountType === 'expense' && rowAmount <= 0) visible = false;
-        }
-        
-        // amount value filter (if present)
-        if (amountValue !== null) {
-            const rowAmount = parseFloat(row.getAttribute('data-amount'));
-            if (amountOperator === 'gt' && !(rowAmount > amountValue)) visible = false;
-            if (amountOperator === 'lt' && !(rowAmount < amountValue)) visible = false;
-            if (amountOperator === 'eq' && Math.abs(rowAmount - amountValue) > 0.01) visible = false;
-        }
-        
-        if (visible) {
-            row.classList.remove('hidden');
-        } else {
-            row.classList.add('hidden');
-        }
-    });
-    updateEmptyRows();
-}
+      const amountTypeSelect = document.querySelector('#amount-filter-value');
+      const amountType = amountTypeSelect ? amountTypeSelect.value : 'all';
 
-function toggleSort(type, event) {
+      const amountInput = document.querySelector('#filter-amount input[type="number"]');
+      const amountOperator = document.querySelector('#filter-amount select[data-operator]') ? 
+                            document.querySelector('#filter-amount select[data-operator]').value : 'gt';
+      const amountValue = amountInput && amountInput.value !== '' ? parseFloat(amountInput.value) : null;
+
+      // Update filter badges
+      if (dateValue) {
+          document.querySelector('#date-filter-badge .filter-text').textContent = `${dateValue}`;
+          document.getElementById('date-filter-badge').classList.remove('hidden');
+      } else {
+          document.getElementById('date-filter-badge').classList.add('hidden');
+      }
+
+      updateActiveFiltersVisibility();
+
+      const rows = Array.from(document.querySelectorAll('.transaction-row'));
+      rows.forEach(row => {
+          let visible = true;
+
+          // Date filter
+          if (dateValue) {
+              const rowDate = row.getAttribute('data-date'); // YYYY-MM-DD format
+              const [start, end] = dateValue.split(" to "); // flatpickr range format
+              if (start && end) {
+                  if (rowDate < start || rowDate > end) visible = false;
+              } else if (start && rowDate !== start) {
+                  visible = false;
+              }
+          }
+
+          // Amount type filter
+          if (amountType !== 'all') {
+              const rowAmount = parseFloat(row.getAttribute('data-amount'));
+              if (amountType === 'income' && rowAmount <= 0) visible = false;
+              if (amountType === 'expense' && rowAmount >= 0) visible = false;
+          }
+
+          // Amount value filter
+          if (amountValue !== null) {
+              const rowAmount = parseFloat(row.getAttribute('data-amount'));
+              if (amountOperator === 'gt' && !(rowAmount > amountValue)) visible = false;
+              if (amountOperator === 'lt' && !(rowAmount < amountValue)) visible = false;
+              if (amountOperator === 'eq' && Math.abs(rowAmount - amountValue) > 0.01) visible = false;
+          }
+
+          row.classList.toggle('hidden', !visible);
+      });
+
+      updateEmptyRows();
+  }
+
+  function toggleSort(type, event) {
 
     event.stopPropagation();
     sortState[type] = sortState[type] === 'asc' ? 'desc' : 'asc';
