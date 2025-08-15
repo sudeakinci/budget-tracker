@@ -34,24 +34,44 @@ class DashboardController extends Controller
                     ->orWhere('user_id', $user->id);
             })
             ->whereBetween('created_at', [$startDate, $endDate . ' 23:59:59'])
-            ->select(
-                'transactions.*',
-                DB::raw(
-                    'CASE 
-                           WHEN transactions.owner = ' . $user->id . ' AND transactions.is_sms = false 
-                           THEN transactions.amount * -1
-                           ELSE transactions.amount
-                           END as display_amount'
-                )
-            );
+            ->select('transactions.*') // Select all transaction columns
+            ->addSelect(DB::raw(
+                'CASE 
+                       WHEN transactions.owner = ' . $user->id . ' AND transactions.is_sms = false 
+                       THEN transactions.amount * -1
+                       ELSE transactions.amount
+                       END as display_amount'
+            ));
 
         // Apply amount type filter (income/expense)
         if ($amountType !== 'all') {
-            if ($amountType === 'income') {
-                $transactionsQuery->having('display_amount', '<', 0); // Income is negative in display_amount
-            } elseif ($amountType === 'expense') {
-                $transactionsQuery->having('display_amount', '>', 0); // Expense is positive in display_amount
-            }
+            $transactionsQuery->where(function ($q) use ($user, $amountType) {
+                if ($amountType === 'income') {
+                    // (owner is user AND not SMS AND amount > 0) OR (owner is not user OR is SMS AND amount < 0)
+                    $q->where(function ($sub) use ($user) {
+                        $sub->where('transactions.owner', $user->id)
+                            ->where('transactions.is_sms', false)
+                            ->where('transactions.amount', '>', 0);
+                    })->orWhere(function ($sub) use ($user) {
+                        $sub->where(function ($sub2) use ($user) {
+                            $sub2->where('transactions.owner', '!=', $user->id)
+                                ->orWhere('transactions.is_sms', true);
+                        })->where('transactions.amount', '<', 0);
+                    });
+                } elseif ($amountType === 'expense') {
+                    // (owner is user AND not SMS AND amount < 0) OR (owner is not user OR is SMS AND amount > 0)
+                    $q->where(function ($sub) use ($user) {
+                        $sub->where('transactions.owner', $user->id)
+                            ->where('transactions.is_sms', false)
+                            ->where('transactions.amount', '<', 0);
+                    })->orWhere(function ($sub) use ($user) {
+                        $sub->where(function ($sub2) use ($user) {
+                            $sub2->where('transactions.owner', '!=', $user->id)
+                                ->orWhere('transactions.is_sms', true);
+                        })->where('transactions.amount', '>', 0);
+                    });
+                }
+            });
         }
 
         // Apply receiver filter if provided
