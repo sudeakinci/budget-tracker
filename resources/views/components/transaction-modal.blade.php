@@ -28,7 +28,8 @@
                 </div>
 
                 <div class="mb-5">
-                    <label for="transaction_date" class="block text-sm font-semibold text-gray-700 mb-2">Transaction Date</label>
+                    <label for="transaction_date" class="block text-sm font-semibold text-gray-700 mb-2">Transaction
+                        Date</label>
                     <input type="datetime-local" name="transaction_date" id="transaction_date"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition shadow-sm hover:border-blue-400"
                         value="{{ now()->format('Y-m-d\TH:i') }}">
@@ -68,7 +69,9 @@
                         <input type="text" name="receiver" id="user_input" placeholder="Enter name" required
                             autocomplete="off"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition shadow-sm hover:border-blue-400">
-                        <div id="user_suggestions" class="absolute left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-10 hidden"></div>
+                        <div id="user_suggestions"
+                            class="absolute left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-10 hidden">
+                        </div>
                     </div>
                 </div>
 
@@ -100,19 +103,19 @@
                             @endforeach
                         </select>
                     </div>
-                    
+
+                    <div id="payment_input_container" class="hidden">
+                        <input type="text" name="payment_term_name" id="payment_input" required
+                            placeholder="Enter payment method"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition shadow-sm hover:border-blue-400">
+                    </div>
+
                     <div class="mt-3">
                         <label class="inline-flex items-center cursor-pointer">
                             <input type="checkbox" name="is_included" id="is_included" value="1" checked
                                 class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                             <span class="ml-2 text-sm text-gray-700">Include in processing</span>
                         </label>
-                    </div>
-
-                    <div id="payment_input_container" class="hidden">
-                        <input type="text" name="payment_term_name" id="payment_input" required
-                            placeholder="Enter payment method"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition shadow-sm hover:border-blue-400">
                     </div>
                 </div>
 
@@ -178,7 +181,7 @@
                 userInput.removeAttribute('required');
                 userSelect.setAttribute('required', '');
                 userInput.value = ''; // Clear custom receiver input
-                
+
                 // Remove any selected_user_id field when switching to select mode
                 const existingHiddenInput = document.getElementById('selected_user_id');
                 if (existingHiddenInput) {
@@ -196,9 +199,9 @@
                 userSelect.value = ''; // Clear selected user
             }
         });
-        
+
         // Clear any selected user ID when typing manually
-        userInput.addEventListener('keydown', function() {
+        userInput.addEventListener('keydown', function () {
             const existingHiddenInput = document.getElementById('selected_user_id');
             if (existingHiddenInput) {
                 existingHiddenInput.remove();
@@ -251,7 +254,7 @@
             paymentSelectContainer.classList.remove('hidden');
             paymentInputContainer.classList.add('hidden');
         }
-        
+
         // Helper function to get current date time in the format needed for datetime-local input
         function getCurrentDateTime() {
             const now = new Date();

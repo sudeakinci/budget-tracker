@@ -166,9 +166,6 @@
                     data-amount="{{ $transaction->display_amount }}">
                     <td class="py-2 px-4 border-b border-gray-200 w-40">
                         <div class="flex items-center">
-                            <input type="checkbox" class="transaction-include mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                                   {{ ($transaction->is_included ?? true) ? 'checked' : '' }}
-                                   onchange="updateTransactionIncluded({{ $transaction->id }}, this.checked)">
                             {{ $transaction->created_at->format('d.m.Y H:i') }}
                         </div>
                     </td>
@@ -1104,52 +1101,4 @@ function deleteTransaction(id) {
     });
 }
 
-// Function to update transaction inclusion status
-function updateTransactionIncluded(transactionId, isIncluded) {
-
-    event.preventDefault();
-
-    // Show a loading indicator or feedback
-    const checkbox = event.target;
-    const originalState = checkbox.checked;
-    
-    // Send an AJAX request to update the transaction
-    fetch(`/transactions/${transactionId}/update-inclusion`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({
-            is_included: isIncluded ? 1 : 0
-        })
-    })
-    .then(response => {
-        if (!response.ok) {
-            // If there was an error, revert the checkbox
-            checkbox.checked = !originalState;
-            throw new Error('Failed to update transaction');
-        }
-        return response.json();
-    })
-    .then(data => {
-        // Update the data attribute
-        checkbox.closest('tr').setAttribute('data-included', isIncluded ? '1' : '0');
-        
-        // Show success message if needed
-        if (data.success) {
-            // Optional: show a success message
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        // Show error message
-        Swal.fire({
-            title: 'Error',
-            text: 'Failed to update transaction inclusion status',
-            icon: 'error',
-            confirmButtonText: 'OK'
-        });
-    });
-}
 </script>
