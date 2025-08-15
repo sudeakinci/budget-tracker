@@ -25,6 +25,16 @@ class LedgerController extends Controller
             return redirect()->route('login');
         }
 
+        $dateRange = $request->input('date_range');
+        $startDate = now()->startOfYear()->format(format: 'Y-m-d');
+        $endDate = now()->format('Y-m-d');
+
+        if ($dateRange) {
+            $dates = explode(' to ', $dateRange);
+            $startDate = $dates[0];
+            $endDate = $dates[1] ?? $dates[0];
+        }
+
         $amountType = $request->input('amount_type', 'all');
         $receiverFilter = $request->input('receiver');
 
@@ -33,6 +43,7 @@ class LedgerController extends Controller
                 $query->where('owner', $user->id)
                     ->orWhere('user_id', $user->id);
             })
+            ->whereBetween('created_at', [$startDate, $endDate . ' 23:59:59'])
             ->where(function ($query) {
                 $query->where('description', 'like', '%[lent]%')
                     ->orWhere('description', 'like', '%[borrowed]%');
@@ -47,7 +58,7 @@ class LedgerController extends Controller
                             END as display_amount'
                 )
             );
-            
+
         // Apply amount type filter (income/expense)
         if ($amountType !== 'all') {
             if ($amountType === 'income') {
@@ -68,45 +79,45 @@ class LedgerController extends Controller
                 ), '>', 0); // Expense is positive in display_amount
             }
         }
-        
+
         // Apply receiver filter if provided
         if ($receiverFilter) {
             $receivers = explode(',', $receiverFilter);
-            $query->where(function($q) use ($receivers) {
-                $q->whereHas('user', function($userQuery) use ($receivers) {
+            $query->where(function ($q) use ($receivers) {
+                $q->whereHas('user', function ($userQuery) use ($receivers) {
                     $userQuery->whereIn('name', $receivers);
                 })
-                ->orWhereIn('receiver', $receivers);
+                    ->orWhereIn('receiver', $receivers);
             });
         }
-        
+
         $transactions = $query->orderByDesc('created_at')->paginate(20);
 
         $users = User::where('id', '!=', $user->id)->get();
         $paymentTerms = PaymentTerm::where('created_by', $user->id)->get();
-        
+
         // calculate monthly statistics for last 3 months
         $stats = [
             'debt' => ['m0' => 0, 'm1' => 0, 'm2' => 0],
             'credit' => ['m0' => 0, 'm1' => 0, 'm2' => 0]
         ];
-        
+
         // get statistics for the last 3 months
         $monthlyStats = Transaction::where(function ($query) use ($user) {
-                $query->where('owner', $user->id)
-                    ->orWhere('user_id', $user->id);
-            })
+            $query->where('owner', $user->id)
+                ->orWhere('user_id', $user->id);
+        })
             ->where(function ($query) {
                 $query->where('description', 'like', '%[lent]%')
                     ->orWhere('description', 'like', '%[borrowed]%');
             })
             ->where('created_at', '>=', now()->subMonths(3))
             ->select(
-                DB::raw(config('database.default') === 'sqlite' 
-                    ? "CAST(strftime('%m', created_at) AS INTEGER) as month" 
+                DB::raw(config('database.default') === 'sqlite'
+                    ? "CAST(strftime('%m', created_at) AS INTEGER) as month"
                     : 'MONTH(created_at) as month'),
-                DB::raw(config('database.default') === 'sqlite' 
-                    ? "CAST(strftime('%Y', created_at) AS INTEGER) as year" 
+                DB::raw(config('database.default') === 'sqlite'
+                    ? "CAST(strftime('%Y', created_at) AS INTEGER) as year"
                     : 'YEAR(created_at) as year'),
                 DB::raw('SUM(CASE 
                     WHEN (owner = ' . $user->id . ' AND amount > 0) OR (user_id = ' . $user->id . ' AND amount < 0) 
@@ -123,7 +134,7 @@ class LedgerController extends Controller
             ->orderBy('year', 'desc')
             ->orderBy('month', 'desc')
             ->get();
-        
+
         // map the statistics to the stats array
         $currentMonth = now()->month;
         $currentYear = now()->year;
@@ -134,16 +145,16 @@ class LedgerController extends Controller
             $date = now()->subMonths($i);
             $monthNames['m' . $i] = $date->format('F'); // full month name (e.g., "August")
         }
-        
+
         foreach ($monthlyStats as $index => $stat) {
             $monthDiff = ($currentYear - $stat->year) * 12 + ($currentMonth - $stat->month);
-            
+
             if ($monthDiff >= 0 && $monthDiff <= 2) {
                 $stats['debt']['m' . $monthDiff] = $stat->debt;
                 $stats['credit']['m' . $monthDiff] = $stat->credit;
             }
         }
-        
+
 
         return view('ledger', [
             'transactions' => $transactions,
@@ -152,6 +163,8 @@ class LedgerController extends Controller
             'balance' => $user->balance,
             'stats' => $stats,
             'monthNames' => $monthNames,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
         ]);
     }
 
@@ -212,7 +225,7 @@ class LedgerController extends Controller
             }
 
             // update owner's balance
-            $owner->balance += $amount; 
+            $owner->balance += $amount;
             $owner->save();
 
             // update other user's balance

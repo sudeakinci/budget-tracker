@@ -25,8 +25,15 @@ class TransactionController extends Controller
             return redirect()->route('login');
         }
 
-        $startDate = $request->input('start_date', now()->startOfYear()->format('Y-m-d'));
-        $endDate = $request->input('end_date', now()->format('Y-m-d'));
+        $dateRange = $request->input('date_range');
+        $startDate = now()->startOfYear()->format(format: 'Y-m-d');
+        $endDate = now()->format('Y-m-d');
+
+        if ($dateRange) {
+            $dates = explode(' to ', $dateRange);
+            $startDate = $dates[0];
+            $endDate = $dates[1] ?? $dates[0];
+        }
         $amountType = $request->input('amount_type', 'all');
         $receiverFilter = $request->input('receiver');
 

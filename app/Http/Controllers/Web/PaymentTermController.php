@@ -25,6 +25,16 @@ class PaymentTermController extends Controller
         $receiverFilter = $request->input('receiver');
         $paymentTermId = $request->input('payment_term_id'); // For backward compatibility
         $paymentTermIds = $request->input('payment_term_ids');
+
+        $dateRange = $request->input('date_range');
+        $startDate = now()->startOfYear()->format(format: 'Y-m-d');
+        $endDate = now()->format('Y-m-d');
+
+        if ($dateRange) {
+            $dates = explode(' to ', $dateRange);
+            $startDate = $dates[0];
+            $endDate = $dates[1] ?? $dates[0];
+        }
             
         // Get all transactions that use any payment term
         $query = Transaction::with(['paymentTerm', 'user', 'owner'])
@@ -32,6 +42,7 @@ class PaymentTermController extends Controller
                 $query->where('owner', $user->id)
                     ->orWhere('user_id', $user->id);
             })
+            ->whereBetween('created_at', [$startDate, $endDate . ' 23:59:59'])
             ->whereNotNull('payment_term_id');
             
         // Apply payment term filter if provided

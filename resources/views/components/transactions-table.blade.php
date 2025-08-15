@@ -10,7 +10,7 @@
     <!-- filter badges -->
     <div id="active-filters" class="my-3 px-4 flex flex-wrap items-center gap-1 hidden">
         <span class="text-sm font-semibold text-gray-700">Filtered by:</span>
-        <div id="date-filter-badge" class="filter-badge hidden">
+        <div id="date-filter-badge" class="hidden flex items-center bg-blue-50 text-blue-700 text-xs font-medium px-2 py-1 rounded-md border border-blue-100">
             <span class="filter-text"></span>
             <button type="button" onclick="clearFilter('date')" class="ml-1 text-gray-500 hover:text-gray-700">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -378,19 +378,35 @@ let flatpickrInstance = flatpickr("#flatpickr-calendar", {
 window.selectedFlatpickrRange = '';
 
 function clearFlatpickrDate() {
-    flatpickrInstance.clear();
-    window.selectedFlatpickrRange = '';
-    filterTable();
-    const badge = document.getElementById('date-filter-badge');
-    if (badge) badge.classList.add('hidden');
+    // Show loading indicator
+    showLoadingIndicator();
+
+    // Build the URL with filter parameters
+    const currentUrl = new URL(window.location.href);
+    const params = new URLSearchParams(currentUrl.search);
+
+    params.delete('date_range');
+
+    // Redirect to filtered URL
+    window.location.href = `${currentUrl.pathname}?${params.toString()}`;
 }
 
 function applyFlatpickrDate() {
-    filterTable();
-    const badge = document.getElementById('date-filter-badge');
-    if (badge) badge.classList.remove('hidden');
-    document.getElementById('filter-date').classList.add('hidden');
-    currentOpenFilter = null;
+    // Show loading indicator
+    showLoadingIndicator();
+
+    // Build the URL with filter parameters
+    const currentUrl = new URL(window.location.href);
+    const params = new URLSearchParams(currentUrl.search);
+
+    if (window.selectedFlatpickrRange) {
+        params.set('date_range', window.selectedFlatpickrRange);
+    } else {
+        params.delete('date_range');
+    }
+
+    // Redirect to filtered URL
+    window.location.href = `${currentUrl.pathname}?${params.toString()}`;
 }
 
 // Track current open filter
@@ -435,109 +451,47 @@ document.addEventListener('click', function(event) {
 });
 
 function clearFilter(type) {
-    // Special handling for server-side amount filter
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // Show loading indicator
+    showLoadingIndicator();
+
     if (type === 'amount') {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('amount_type')) {
-            // Show loading indicator
-            showLoadingIndicator();
-            
-            // Remove the amount_type parameter and reload
-            urlParams.delete('amount_type');
-            window.location.href = `${window.location.pathname}?${urlParams.toString()}`;
-            return;
-        }
+        urlParams.delete('amount_type');
+    } else if (type === 'receiver') {
+        urlParams.delete('receiver');
+    } else if (type === 'date') {
+        urlParams.delete('date_range');
     }
-    
-    // Continue with local filter clearing
-    const popup = document.getElementById('filter-' + type);
-    if (popup) {
-        popup.querySelectorAll('input').forEach(el => {
-            el.value = '';
-        });
-        popup.querySelectorAll('select').forEach(el => {
-            el.selectedIndex = 0;
-        });
-        
-        // Special handling for different filter types
-        if (type === 'amount') {
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.dataset.value === 'all') {
-                    btn.classList.add('active');
-                }
-            });
-            
-            // Reset the filter icon state
-            const amountFilterIcon = document.querySelector('#amount-filter-icon');
-            amountFilterIcon.classList.remove('text-blue-500', 'font-bold');
-            
-            // Hide filter container for amount
-            const container = document.getElementById(type + '-filter-container');
-            if (container) {
-                container.classList.add('hidden');
-            }
-            
-            // Clear badges
-            const badgesContainer = document.getElementById(type + '-filter-badges');
-            if (badgesContainer) {
-                badgesContainer.innerHTML = '';
-            }
-        } else if (type === 'receiver') {
-            // Show loading indicator
-            showLoadingIndicator();
-            
-            // Remove the receiver parameter and reload
-            const urlParams = new URLSearchParams(window.location.search);
-            urlParams.delete('receiver');
-            window.location.href = `${window.location.pathname}?${urlParams.toString()}`;
-            document.getElementById('receiver-filter-container').classList.add('hidden');
-        } else if (type === 'date') {
-            // Hide filter badge for date
-            const badge = document.getElementById(type + '-filter-badge');
-            if (badge) {
-                badge.classList.add('hidden');
-            }
-        }
-    }
-    
-    // Close popup
-    document.getElementById('filter-' + type).classList.add('hidden');
-    if (currentOpenFilter === type) {
-        currentOpenFilter = null;
-    }
-    
-    filterTable();
-    updateActiveFiltersVisibility();
+
+    // Redirect to the updated URL
+    window.location.href = `${window.location.pathname}?${urlParams.toString()}`;
 }
 
 function setAmountFilter(element, value) {
     // Show loading indicator
     showLoadingIndicator();
-    
+
     // Update visual state for all buttons
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     element.classList.add('active');
-    
+
     // Update hidden select value
     document.querySelector('#amount-filter-value').value = value;
-    
+
     // Build the URL with filter parameters
-    const currentUrl = new URL(window.location.href);
-    
-    // Keep existing parameters but update amount_type
-    const params = new URLSearchParams(currentUrl.search);
-    
+    const params = new URLSearchParams(window.location.search);
+
     if (value === 'all') {
         params.delete('amount_type');
     } else {
         params.set('amount_type', value);
     }
-    
+
     // Redirect to filtered URL
-    window.location.href = `${currentUrl.pathname}?${params.toString()}`;
+    window.location.href = `${window.location.pathname}?${params.toString()}`;
 }
 
 // Show loading indicator when filter is applied
@@ -563,18 +517,14 @@ function showLoadingIndicator() {
 }
 
 function updateActiveFiltersVisibility() {
-    // Check if any filter is active
-    const hasDateFilter = document.querySelector('#filter-date input')?.value;
-    const hasReceiverFilter = selectedReceivers.length > 0;
     
-    // Check if the amount filter has an active value
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasDateFilter = urlParams.has('date_range');
+    const hasReceiverFilter = selectedReceivers.length > 0;
     const amountValue = document.querySelector('#amount-filter-value')?.value;
     const hasAmountFilter = amountValue && amountValue !== 'all';
-    
-    // Also check URL parameters for server-side filters
-    const urlParams = new URLSearchParams(window.location.search);
     const hasAmountTypeParam = urlParams.has('amount_type') && urlParams.get('amount_type') !== 'all';
-    
+
     const activeFiltersContainer = document.getElementById('active-filters');
     
     if (hasDateFilter || hasReceiverFilter || hasAmountFilter || hasAmountTypeParam) {
@@ -613,16 +563,16 @@ function updateActiveFiltersVisibility() {
 function clearAllFilters() {
     // Check if we have URL parameters for filters
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('amount_type') || urlParams.has('payment_term_ids') || urlParams.has('payment_term_id')) {
+    if (urlParams.has('amount_type') || urlParams.has('payment_term_ids') || urlParams.has('payment_term_id') || urlParams.has('date_range')) {
         // Show loading indicator
         showLoadingIndicator();
-        
+
         // Create new URL without filter parameters but keep pagination if present
         const newParams = new URLSearchParams();
         if (urlParams.has('page')) {
             newParams.set('page', urlParams.get('page'));
         }
-        
+
         // Redirect to unfiltered URL
         window.location.href = `${window.location.pathname}?${newParams.toString()}`;
         return;
@@ -632,13 +582,13 @@ function clearAllFilters() {
     clearFilter('date');
     clearFilter('receiver');
     clearFilter('amount');
-    
+
     // Additional cleanup for receiver filter
     selectedReceivers = [];
     updateSelectedReceiversDisplay();
     document.getElementById('receiver-filter-badges').innerHTML = '';
     document.getElementById('receiver-filter-container').classList.add('hidden');
-    
+
     // Clear amount filter
     const amountFilterContainer = document.getElementById('amount-filter-container');
     if (amountFilterContainer) {
@@ -648,25 +598,25 @@ function clearAllFilters() {
             badgesContainer.innerHTML = '';
         }
     }
-    
+
     // Clear payment term filters if they exist
     if (document.getElementById('payment-term-filter-badges')) {
         document.getElementById('payment-term-filter-badges').innerHTML = '';
         document.getElementById('payment-term-filter-container').classList.add('hidden');
-        
+
         // If clearAllPaymentTermFilters function exists, call it (without reloading page)
         if (typeof clearPaymentTermsWithoutReload === 'function') {
             clearPaymentTermsWithoutReload();
         }
     }
-    
+
     // Hide the active filters container
     document.getElementById('active-filters').classList.add('hidden');
-    
+
     // Make sure all rows are visible
     const rows = document.querySelectorAll('.transaction-row');
     rows.forEach(row => row.classList.remove('hidden'));
-    
+
     // Update empty rows indicator
     updateEmptyRows();
 }
@@ -693,17 +643,26 @@ document.addEventListener('DOMContentLoaded', function() {
 // Initialize filters based on URL parameters
 function initializeFiltersFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
-    
+
+    if (urlParams.has('date_range')) {
+        const dateRange = urlParams.get('date_range');
+        window.selectedFlatpickrRange = dateRange;
+        flatpickrInstance.setDate(dateRange.split(' to '));
+        document.getElementById('active-filters').classList.remove('hidden');
+        document.getElementById('date-filter-badge').classList.remove('hidden');
+        document.querySelector('#date-filter-badge .filter-text').textContent = dateRange;
+    }
+
     // Handle amount type filter
     if (urlParams.has('amount_type')) {
         const amountType = urlParams.get('amount_type');
-        
+
         // Update select value
         const selectElement = document.querySelector('#amount-filter-value');
         if (selectElement) {
             selectElement.value = amountType;
         }
-        
+
         // Update filter button active state
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.classList.remove('active');
@@ -711,15 +670,15 @@ function initializeFiltersFromUrl() {
                 btn.classList.add('active');
             }
         });
-        
+
         // Update filter icon
         const amountFilterIcon = document.querySelector('#amount-filter-icon');
         if (amountFilterIcon && amountType && amountType !== 'all') {
             amountFilterIcon.classList.add('text-blue-500', 'font-bold');
-            
+
             // Update amount filter badges
             updateAmountFilterBadge(amountType);
-            
+
             // Show the active filters container
             document.getElementById('active-filters').classList.remove('hidden');
         } else {
@@ -730,17 +689,17 @@ function initializeFiltersFromUrl() {
             }
         }
     }
-    
+
     // Handle receiver filter
     if (urlParams.has('receiver')) {
         const receiverParam = urlParams.get('receiver');
         selectedReceivers = receiverParam.split(',');
-        
+
         // Update receiver filter icon
         const receiverFilterIcon = document.querySelector('#receiver-filter-icon');
         if (receiverFilterIcon && selectedReceivers.length > 0) {
             receiverFilterIcon.classList.add('text-blue-500', 'font-bold');
-            
+
             // Show active filters container and update badges
             document.getElementById('active-filters').classList.remove('hidden');
             updateReceiverFilterBadges();
@@ -879,25 +838,22 @@ function selectAllReceivers() {
 function applyReceiverFilter() {
     // Show loading indicator
     showLoadingIndicator();
-    
+
     // Update UI to show applied filters
     updateReceiverFilterBadges();
-    
+
     // Build the URL with filter parameters
-    const currentUrl = new URL(window.location.href);
-    
-    // Keep existing parameters but update receiver
-    const params = new URLSearchParams(currentUrl.search);
-    
+    const params = new URLSearchParams(window.location.search);
+
     if (selectedReceivers.length === 0) {
         params.delete('receiver');
     } else {
         params.set('receiver', selectedReceivers.join(','));
     }
-    
+
     // Redirect to filtered URL
-    window.location.href = `${currentUrl.pathname}?${params.toString()}`;
-    
+    window.location.href = `${window.location.pathname}?${params.toString()}`;
+
     // Stop propagation of click event to prevent immediate closure
     event.stopPropagation();
 }
