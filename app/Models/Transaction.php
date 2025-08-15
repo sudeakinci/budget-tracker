@@ -10,7 +10,7 @@ class Transaction extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['owner', 'user_id', 'payment_term_id', 'payment_term_name', 'description', 'amount', 'is_sms', 'is_included', 'created_at', 'updated_at'];
+    protected $fillable = ['owner', 'user_id', 'payment_term_id', 'payment_term_name', 'description', 'amount', 'is_sms', 'is_included', 'created_at', 'updated_at', 'receiver'];
 
     protected $casts = [
         'amount' => 'float',

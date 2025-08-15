@@ -161,7 +161,7 @@
                 <tr class="hover:bg-blue-50 {{ $loop->even ? 'bg-gray-50' : '' }} transaction-row"
                     data-payment-method="{{ $transaction->payment_term_name ?: '-' }}"
                     data-payment-term-id="{{ $transaction->payment_term_id }}"
-                    data-receiver="{{ optional($transaction->user)->name ?: '-' }}"
+                    data-receiver="{{ $transaction->receiver ?: (optional($transaction->user)->name ?: '-') }}"
                     data-date="{{ $transaction->created_at->format('Y-m-d') }}"
                     data-amount="{{ $transaction->display_amount }}">
                     <td class="py-2 px-4 border-b border-gray-200 w-40">
@@ -174,7 +174,7 @@
                     </td>
                     @if($showReceiver)
                         <td class="py-2 px-4 border-b border-gray-200 w-48">
-                            {{ optional($transaction->user)->name ?: '-' }}
+                            {{ $transaction->receiver ?: (optional($transaction->user)->name ?: '-') }}
                         </td>
                     @endif
                     @if($showPaymentMethod)

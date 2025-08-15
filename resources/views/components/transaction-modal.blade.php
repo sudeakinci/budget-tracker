@@ -65,7 +65,7 @@
                     </div>
 
                     <div id="user_input_container" class="hidden" style="position:relative;">
-                        <input type="text" name="custom_user" id="user_input" placeholder="Enter name" required
+                        <input type="text" name="receiver" id="user_input" placeholder="Enter name" required
                             autocomplete="off"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition shadow-sm hover:border-blue-400">
                         <div id="user_suggestions" class="absolute left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-10 hidden"></div>
@@ -177,6 +177,7 @@
                 userInputContainer.classList.add('hidden');
                 userInput.removeAttribute('required');
                 userSelect.setAttribute('required', '');
+                userInput.value = ''; // Clear custom receiver input
                 
                 // Remove any selected_user_id field when switching to select mode
                 const existingHiddenInput = document.getElementById('selected_user_id');
@@ -192,6 +193,7 @@
                 userInputContainer.classList.remove('hidden');
                 userSelect.removeAttribute('required');
                 userInput.setAttribute('required', '');
+                userSelect.value = ''; // Clear selected user
             }
         });
         

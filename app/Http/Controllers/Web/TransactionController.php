@@ -71,8 +71,11 @@ class TransactionController extends Controller
         // Apply receiver filter if provided
         if ($receiverFilter) {
             $receivers = explode(',', $receiverFilter);
-            $query->whereHas('user', function($q) use ($receivers) {
-                $q->whereIn('name', $receivers);
+            $query->where(function($q) use ($receivers) {
+                $q->whereHas('user', function($userQuery) use ($receivers) {
+                    $userQuery->whereIn('name', $receivers);
+                })
+                ->orWhereIn('receiver', $receivers);
             });
         }
         
@@ -166,6 +169,7 @@ class TransactionController extends Controller
             'payment_type' => 'required|in:select,custom',
             'user_id' => 'nullable|exists:users,id',
             'selected_user_id' => 'nullable|exists:users,id',
+            'receiver' => 'nullable|string|max:255',
             'payment_term_id' => 'required_if:payment_type,select|nullable|exists:payment_terms,id',
             'payment_term_name' => 'required_if:payment_type,custom|nullable|string|max:255',
             'transaction_type' => 'required|in:income,expense',
@@ -210,16 +214,22 @@ class TransactionController extends Controller
 
             // determine the user_id - use selected_user_id from dropdown if available
             $userId = null;
+            $receiverName = null;
             if ($validatedData['receiver_type'] === 'select') {
                 $userId = $validatedData['user_id'] ?? null;
-            } else if (isset($validatedData['selected_user_id'])) {
-                // use the ID from the autocomplete dropdown
-                $userId = $validatedData['selected_user_id'];
+            } else if ($validatedData['receiver_type'] === 'custom') {
+                if (isset($validatedData['selected_user_id'])) {
+                    // use the ID from the autocomplete dropdown
+                    $userId = $validatedData['selected_user_id'];
+                } else {
+                    $receiverName = $validatedData['receiver'] ?? null;
+                }
             }
             
             $transaction = Transaction::create([
                 'owner' => $owner->id,
                 'user_id' => $userId,
+                'receiver' => $receiverName,
                 'payment_term_id' => $paymentTermId,
                 'payment_term_name' => $paymentTermName,
                 'description' => $validatedData['description'] ?? null,

@@ -78,8 +78,11 @@ class PaymentTermController extends Controller
         // Apply receiver filter if provided
         if ($receiverFilter) {
             $receivers = explode(',', $receiverFilter);
-            $query->whereHas('user', function($q) use ($receivers) {
-                $q->whereIn('name', $receivers);
+            $query->where(function($q) use ($receivers) {
+                $q->whereHas('user', function($userQuery) use ($receivers) {
+                    $userQuery->whereIn('name', $receivers);
+                })
+                ->orWhereIn('receiver', $receivers);
             });
         }
             
