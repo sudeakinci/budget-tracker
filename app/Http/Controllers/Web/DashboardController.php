@@ -21,8 +21,15 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
+        $dateRange = $request->input('date_range');
         $startDate = $request->input('start_date', now()->startOfYear()->format('Y-m-d'));
         $endDate = $request->input('end_date', now()->format('Y-m-d'));
+
+        if ($dateRange) {
+            $dates = explode(' to ', $dateRange);
+            $startDate = $dates[0];
+            $endDate = $dates[1] ?? $dates[0];
+        }
 
         $amountType = $request->input('amount_type', 'all');
         $receiverFilter = $request->input('receiver');
@@ -77,11 +84,11 @@ class DashboardController extends Controller
         // Apply receiver filter if provided
         if ($receiverFilter) {
             $receivers = explode(',', $receiverFilter);
-            $transactionsQuery->where(function($q) use ($receivers) {
-                $q->whereHas('user', function($userQuery) use ($receivers) {
+            $transactionsQuery->where(function ($q) use ($receivers) {
+                $q->whereHas('user', function ($userQuery) use ($receivers) {
                     $userQuery->whereIn('name', $receivers);
                 })
-                ->orWhereIn('receiver', $receivers);
+                    ->orWhereIn('receiver', $receivers);
             });
         }
 

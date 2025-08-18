@@ -24,22 +24,14 @@
             <h3 class="text-lg font-bold text-gray-800">Recent Transactions</h3>
         </div>
 
-        @if($transactions->isEmpty())
-            <div class="p-6 text-center text-gray-500">
-                <p>No transactions found.</p>
-                <a href="{{ route('transactions') }}" class="text-blue-600 hover:underline mt-2 inline-block">Make your
-                    first transaction</a>
-            </div>
-        @else
-            <x-transactions-table :transactions="$transactions" :show-receiver="true" :row-count="5" :showPaymentMethod="true" />
-            <div class="px-6 py-3 bg-gray-50 text-right">
-                <a href="{{ route('transactions') }}" class="text-blue-600 hover:underline text-sm font-medium">
-                    View All Transactions
-                </a>
-            </div>
-        @endif
+        <x-transactions-table :transactions="$transactions" :show-receiver="true" :row-count="5" :showPaymentMethod="true" />
+        <div class="px-6 py-3 bg-gray-50 text-right">
+            <a href="{{ route('transactions') }}" class="text-blue-600 hover:underline text-sm font-medium">
+                View All Transactions
+            </a>
+        </div>
     </div>
-
+    
     <!-- quick Links -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
         <a href="{{ route('profile') }}"

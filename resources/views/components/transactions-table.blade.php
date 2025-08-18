@@ -157,7 +157,7 @@
                     </td>
                 </tr>
             @endif
-            @foreach($transactions as $transaction)
+            @forelse($transactions as $transaction)
                 <tr class="hover:bg-blue-50 {{ $loop->even ? 'bg-gray-50' : '' }} transaction-row"
                     data-payment-method="{{ $transaction->payment_term_name ?: '-' }}"
                     data-payment-term-id="{{ $transaction->payment_term_id }}"
@@ -234,8 +234,8 @@
                         </div>
                     </td>
                 </tr>
-            @endforeach
-
+                @empty
+            @endforelse
         </tbody>
     </table>
  </div>
