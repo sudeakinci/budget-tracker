@@ -38,11 +38,12 @@ class PaymentTermController extends Controller
             
         // Get all transactions that use any payment term
         $query = Transaction::with(['paymentTerm', 'user', 'owner'])
-            ->where(function ($query) use ($user) {
-                $query->where('owner', $user->id)
-                    ->orWhere('user_id', $user->id);
-            })
-            ->whereBetween('created_at', [$startDate, $endDate . ' 23:59:59'])
+            ->forUser($user->id)
+            ->dateRange($startDate, $endDate)
+            ->withDisplayAmount($user->id)
+            ->filterAmountType($user->id, $amountType)
+            ->when($receiverFilter, fn($q) => $q->filterReceiver(explode(',', $receiverFilter)))
+            ->orderByDesc('created_at')
             ->whereNotNull('payment_term_id');
             
         // Apply payment term filter if provided
@@ -52,49 +53,6 @@ class PaymentTermController extends Controller
         } elseif ($paymentTermId) {
             // For backward compatibility
             $query->where('payment_term_id', $paymentTermId);
-        }
-            
-        $query->select(
-                'transactions.*',
-                \DB::raw(
-                    'CASE 
-                           WHEN transactions.owner = ' . $user->id . ' AND transactions.is_sms = false 
-                           THEN transactions.amount * -1
-                           ELSE transactions.amount
-                           END as display_amount'
-                )
-            );
-            
-        // Apply amount type filter (income/expense)
-        if ($amountType !== 'all') {
-            if ($amountType === 'income') {
-                $query->where(DB::raw(
-                    'CASE 
-                        WHEN transactions.owner = ' . $user->id . ' AND transactions.is_sms = false 
-                        THEN transactions.amount * -1
-                        ELSE transactions.amount
-                        END'
-                ), '<', 0); // Income is negative in display_amount
-            } elseif ($amountType === 'expense') {
-                $query->where(DB::raw(
-                    'CASE 
-                        WHEN transactions.owner = ' . $user->id . ' AND transactions.is_sms = false 
-                        THEN transactions.amount * -1
-                        ELSE transactions.amount
-                        END'
-                ), '>', 0); // Expense is positive in display_amount
-            }
-        }
-        
-        // Apply receiver filter if provided
-        if ($receiverFilter) {
-            $receivers = explode(',', $receiverFilter);
-            $query->where(function($q) use ($receivers) {
-                $q->whereHas('user', function($userQuery) use ($receivers) {
-                    $userQuery->whereIn('name', $receivers);
-                })
-                ->orWhereIn('receiver', $receivers);
-            });
         }
             
         $transactions = $query->orderByDesc('created_at')
