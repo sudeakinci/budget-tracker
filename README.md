@@ -1,4 +1,4 @@
-# Money Transfer Backend
+# Budget Tracker
 
 A Laravel-based money transfer management system that supports user-to-user transfers, balance tracking, and automatic transaction recording via SMS integration.
 
@@ -24,7 +24,7 @@ A Laravel-based money transfer management system that supports user-to-user tran
 ### 1. Clone the Repository
 ```bash
 git clone <repository-url>
-cd money-transfer-backend
+cd budget-tracker
 ```
 
 ### 2. Install Dependencies
@@ -71,7 +71,7 @@ Update `.env` file:
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=money_transfer
+DB_DATABASE=budget_tracker
 DB_USERNAME=root
 DB_PASSWORD=your_password
 ```
@@ -134,11 +134,12 @@ POST /api/sms-integration/{smsSettingId} # Process SMS message
 Currently supports Ziraat Bank SMS format:
 ```
 # Incoming Transfer
-"25/07 09:45 HESABINIZA JOHN DOE TARAFINDAN 500.00 TL GONDERILDI"
+"05.08.2025 saat 09:22'de **** nolu hesabinizdan FAST ile John Doe ***** hesabina 100,00 TL aktarilmistir"
 
 # Outgoing Transfer  
-"25/07 14:30 HESABINIZDAN JANE DOE HESABINA 250.00 TL GONDERILDI"
+"05.08.2025 tarihinde saat 09:21'de **** nolu hesabiniza John Doe tarafindan FAST ile 100,00 TL gonderilmistir"
 ```
+**Note:** SMS integration is optional. You can still use the application fully without setting up SMS parsing. Transactions can be added manually through the dashboard or API.
 
 ## Commands
 
@@ -173,7 +174,7 @@ php artisan tinker           # Interactive shell
 ## Project Structure
 
 ```
-money-transfer-backend/
+budget-tracker/
 ├── app/
 │   ├── Http/
 │   │   ├── Controllers/
@@ -219,7 +220,7 @@ money-transfer-backend/
 
 API documentation is available via L5-Swagger package. After starting the application, visit:
 ```
-http://127.0.0.1:8000/api/documentation
+http://127.0.0.1:8000/api/doc
 ```
 
 ## Contributing
